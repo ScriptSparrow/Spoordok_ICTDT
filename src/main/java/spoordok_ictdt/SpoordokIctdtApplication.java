@@ -1,4 +1,4 @@
-package com.example.spoordok_ictdt;
+package spoordok_ictdt;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
