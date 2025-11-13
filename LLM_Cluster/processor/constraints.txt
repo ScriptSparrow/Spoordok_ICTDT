@@ -1,0 +1,3 @@
+# constraints.txt
+
+pywin32 @ https://example.com/null  # Prevent installation of a windows only package

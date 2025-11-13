@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Attach to Docker",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/LLM_Cluster/processor/src",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "preLaunchTask": "docker-compose up debug",
+            "postDebugTask": "docker-compose down"
+        }
+    ]
+}
