@@ -40,8 +40,6 @@ attrs==25.4.0
     #   referencing
 backoff==2.2.1
     # via posthog
-backports-asyncio-runner==1.2.0
-    # via pytest-asyncio
 banks==2.2.0
     # via llama-index-core
 bcrypt==5.0.0

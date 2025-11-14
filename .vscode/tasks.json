@@ -4,7 +4,7 @@
         {
             "label": "docker-compose up debug",
             "type": "shell",
-            "command": "docker-compose --profile debug up --build -d",
+            "command": "docker-compose --profile debug up --build -d && sleep 5",
             "options": {
                 "cwd": "${workspaceFolder}/LLM_Cluster/processor"
             },

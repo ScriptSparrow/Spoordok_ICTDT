@@ -36,6 +36,6 @@ build/
 
 ### Python ###
 venv
-.models/*
-!.models/.gitkeep
+.models
+.docling-models
 __pycache__

@@ -42,6 +42,6 @@ async def index_document(index: str, image: UploadFile):
     
     content = await image.read()
     with io.BytesIO(content) as bytes_io: 
-        embed_document(index_name=index, bytes=bytes_io)
+        embed_document(index_name=index, model_type="basic", bytes=bytes_io)
     
     

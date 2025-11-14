@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from fastapi.responses import RedirectResponse
 import uvicorn
+from elastic.elastic import ensure_setup
 
 from routers import health, process_doc
 
@@ -17,6 +18,4 @@ async def root():
 app.include_router(health.router)
 app.include_router(process_doc.router)
 
-
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+ensure_setup()

@@ -12,6 +12,8 @@ services:
       - "8000:8000"
     profiles:
       - release
+    volumes:
+      - ./.docling-models:/models
 
   processor-debug:
     build: 
@@ -24,8 +26,10 @@ services:
       - "5678:5678"  # Debugger port
     environment: 
       - ELASTICSEARCH_URL=http://processor-elastic-db:9200
+
     volumes:
       - ./src:/app
+      - ./.docling-models:/models
     profiles:
       - debug
 
