@@ -3,9 +3,8 @@ from pydantic import BaseModel
 from typing import Optional
 from fastapi.responses import RedirectResponse
 import uvicorn
-from elastic.elastic import ensure_setup
 
-from routers import health, process_doc
+from routers import health, process_doc, prompts_config
 
 app = FastAPI(title="LLM Cluster API", version="1.0.0")
 
@@ -17,5 +16,5 @@ async def root():
 
 app.include_router(health.router)
 app.include_router(process_doc.router)
+app.include_router(prompts_config.router)
 
-ensure_setup()

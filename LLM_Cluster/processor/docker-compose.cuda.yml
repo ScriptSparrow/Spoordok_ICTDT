@@ -1,0 +1,46 @@
+
+include: 
+  - ./docker-compose.shared.yml
+
+services: 
+  processor:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      target: release
+    container_name: llm_processor
+    ports:
+      - "8000:8000"
+    profiles:
+      - release
+    volumes:
+      - ./.models:/models
+
+  processor-debug:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      target: debug
+    container_name: llm_processor_debug
+    ports:
+      - "8000:8000"
+      - "5678:5678"  # Debugger port
+    environment: 
+      - QDRANT_URL=http://qdrant:6333
+      - MODEL_TYPES=default
+    volumes:
+      - ./prompts.yml:/config/prompts.yml
+      - ./src:/app
+      - ./.models:/models
+    profiles:
+      - debug
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: ["gpu"]
+
+    networks:
+      - spoordok_network
+
+  

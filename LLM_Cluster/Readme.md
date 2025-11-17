@@ -8,6 +8,10 @@ Het LLM Cluster is bedoelt voor het managen en het organiseren van de LLMs.
     Python api voor de API wrapper om het embedden en de LLM heen. 
 ```
 
+## Ollama
+
+
+
 ## Setup Instructies
 
 ### 1. Repository Klonen
@@ -82,6 +86,7 @@ Voor Linux/Mac gebruik:
 
 ## Dependencies beheren
 
+
 Dit project gebruikt `pip-tools` om dependencies te beheren:
 
 ```bash
@@ -101,3 +106,36 @@ pip-compile --constraint constraints.txt --upgrade requirements.in
 # Installeer dependencies
 pip install -r requirements.txt
 ```
+
+
+
+# TODO: Multi-turn Reasoning Enhancement
+
+Goal: Enable iterative (dialog) analysis over previously retrieved captions (and later images).
+
+Tasks:
+1. Conversation State
+   - Design SessionMemory (stores last K user queries + retrieved point_ids + model responses).
+2. Context Expansion
+   - Implement follow-up query fusion: new_embedding = w1*current + w2*mean(previous successful caption embeddings).
+3. Re-Ranking
+   - Add conversational relevance scoring: boost points mentioned in prior turns; decay stale ones.
+4. Clarification Handling
+   - Detect underspecified queries; auto-generate clarifying questions using VLM.
+5. Intent Shift Detection
+   - Simple classifier (embedding distance or keyword diff) to decide when to reset context.
+6. Deferred Image Access
+   - Placeholder to fetch original image bytes only if user drills down.
+7. Evaluation
+   - Metrics: Conversational Recall@K over scripted multi-turn scenarios.
+8. Future (when image embeddings added)
+   - Cross-modal co-reference: map pronouns (“this”, “that scene”) to prior image vectors.
+
+Open Questions:
+- Max turns to keep? (default 5)
+- Store chain-of-thought or just final answers?
+- Need per-context throttle to avoid vector spam?
+
+Dependencies:
+- Add SessionMemory class (in a new session.py).
+- Extend QDrantConnector to batch fetch by point_id list.

@@ -2,44 +2,65 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "docker-compose up debug",
+            "label": "python docker-compose up debug (nvidia)",
             "type": "shell",
-            "command": "docker-compose --profile debug up --build -d && sleep 5",
+            "command": "docker-compose -f ${workspaceFolder}/LLM_Cluster/processor/docker-compose.cuda.yml --profile debug up -d; sleep 2",
             "options": {
-                "cwd": "${workspaceFolder}/LLM_Cluster/processor"
-            },
-            "dependsOn": ["docker-compose down", "docker-compose build"],
-            "isBackground": true,
-            "problemMatcher": [
-                {
-                    "pattern": [
-                        {
-                            "regexp": ".",
-                            "file": 1,
-                            "location": 2,
-                            "message": 3
-                        }
-                    ],
-                    "background": {
-                        "activeOnStart": true,
-                        "beginsPattern": ".",
-                        "endsPattern": ".*Waiting for client to attach.*"
-                    }
+                "cwd": "${workspaceFolder}/LLM_Cluster/processor",
+                "env": {
+                    "MODEL_TYPE": "default"
                 }
-            ]
+            },
+            "dependsOn": ["python docker-compose down (nvidia)", "python docker-compose build (nvidia)"],
         },
         {
-            "label": "docker-compose build",
+            "label": "python docker-compose up debug (mlx)",
             "type": "shell",
-            "command": "docker-compose --profile debug build",
+            "command": "docker-compose -f ${workspaceFolder}/LLM_Cluster/processor/docker-compose.mac.yml --profile debug up -d && sleep 2",
+            "options": {
+                "cwd": "${workspaceFolder}/LLM_Cluster/processor",
+                "env": {
+                    "MODEL_TYPE": "silicon"
+                }
+            },
+            "dependsOn": ["python docker-compose down (mlx)", "python docker-compose build (mlx)"]
+        },
+        {
+            "label": "python docker-compose build (nvidia)",
+            "type": "shell",
+            "command": "docker-compose -f ${workspaceFolder}/LLM_Cluster/processor/docker-compose.cuda.yml --profile debug build",
+            "options": {
+                "cwd": "${workspaceFolder}/LLM_Cluster/processor",
+                "env": {
+                    "DOCKER_BUILDKIT": "1",
+                    "COMPOSE_DOCKER_CLI_BUILD": "1"
+                }
+            }
+        },
+        {
+            "label": "python docker-compose build (mlx)",
+            "type": "shell",
+            "command": "docker-compose -f ${workspaceFolder}/LLM_Cluster/processor/docker-compose.mac.yml --profile debug build",
+            "options": {
+                "cwd": "${workspaceFolder}/LLM_Cluster/processor",
+                "env": {
+                    "DOCKER_BUILDKIT": "1",
+                    "COMPOSE_DOCKER_CLI_BUILD": "1"
+                }
+            }
+        },
+        {
+            "label": "python docker-compose down (nvidia)",
+            "type": "shell",
+            "command": "docker-compose -f ${workspaceFolder}/LLM_Cluster/processor/docker-compose.cuda.yml --profile debug down",
             "options": {
                 "cwd": "${workspaceFolder}/LLM_Cluster/processor"
             }
         },
         {
-            "label": "docker-compose down",
+            "label": "python docker-compose down (mlx)",
             "type": "shell",
-            "command": "docker-compose --profile debug --profile release down",
+            "command": "docker-compose -f ${workspaceFolder}/LLM_Cluster/processor/docker-compose.mac.yml --profile debug down",
             "options": {
                 "cwd": "${workspaceFolder}/LLM_Cluster/processor"
             }

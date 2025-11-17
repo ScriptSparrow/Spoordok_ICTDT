@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 pydantic
-elasticsearch
+qdrant-client
 llama-index
 llama-index-llms-ollama
 llama-index-embeddings-ollama
@@ -9,3 +9,5 @@ llama-index-vector-stores-elasticsearch
 llama-index-vector-stores-chroma
 llama-index-readers-docling
 python-multipart
+pyyaml
+pywin32; sys_platform == 'win32'

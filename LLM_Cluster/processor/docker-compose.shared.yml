@@ -1,0 +1,38 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: processor-qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - ./.qdrant-data:/qdrant/storage
+    profiles:
+      - debug
+      - release
+    networks:
+      - spoordok_network
+    
+  ollama:
+    image: ollama/ollama:latest
+    container_name: processor-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ${OLLAMA_MODELS:-./.ollama-data}:/root/.ollama
+    profiles:
+      - debug
+      - release
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: ["gpu"]
+
+    networks:
+      - spoordok_network
+
+
+networks:
+  spoordok_network:
+    name: spoordok_network
+    driver: bridge

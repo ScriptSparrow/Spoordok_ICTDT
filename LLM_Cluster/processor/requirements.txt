@@ -40,6 +40,8 @@ attrs==25.4.0
     #   referencing
 backoff==2.2.1
     # via posthog
+backports-asyncio-runner==1.2.0
+    # via pytest-asyncio
 banks==2.2.0
     # via llama-index-core
 bcrypt==5.0.0
@@ -50,7 +52,7 @@ beautifulsoup4==4.14.2
     #   llama-index-readers-file
 build==1.3.0
     # via chromadb
-cachetools==6.2.1
+cachetools==6.2.2
     # via google-auth
 certifi==2025.11.12
     # via
@@ -65,7 +67,7 @@ charset-normalizer==3.4.4
     # via requests
 chromadb==1.3.4
     # via llama-index-vector-stores-chroma
-click==8.3.0
+click==8.3.1
     # via
     #   llama-cloud-services
     #   nltk
@@ -104,7 +106,7 @@ distro==1.9.0
     #   posthog
 docling==2.61.2
     # via llama-index-readers-docling
-docling-core[chunking]==2.51.0
+docling-core[chunking]==2.51.1
     # via
     #   docling
     #   docling-ibm-models
@@ -119,9 +121,7 @@ durationpy==0.10
 elastic-transport==8.17.1
     # via elasticsearch
 elasticsearch==8.19.2
-    # via
-    #   -r requirements.in
-    #   llama-index-vector-stores-elasticsearch
+    # via llama-index-vector-stores-elasticsearch
 et-xmlfile==2.0.0
     # via openpyxl
 exceptiongroup==1.3.0
@@ -130,7 +130,7 @@ exceptiongroup==1.3.0
     #   pytest
 faker==38.0.0
     # via polyfactory
-fastapi==0.121.1
+fastapi==0.121.2
     # via -r requirements.in
 filelock==3.20.0
     # via
@@ -164,21 +164,27 @@ grpcio==1.76.0
     # via
     #   chromadb
     #   opentelemetry-exporter-otlp-proto-grpc
+    #   qdrant-client
 h11==0.16.0
     # via
     #   httpcore
     #   uvicorn
+h2==4.3.0
+    # via httpx
+hpack==4.1.0
+    # via h2
 httpcore==1.0.9
     # via httpx
 httptools==0.7.1
     # via uvicorn
-httpx==0.28.1
+httpx[http2]==0.28.1
     # via
     #   chromadb
     #   llama-cloud
     #   llama-index-core
     #   ollama
     #   openai
+    #   qdrant-client
 huggingface-hub==0.36.0
     # via
     #   accelerate
@@ -188,6 +194,8 @@ huggingface-hub==0.36.0
     #   transformers
 humanfriendly==10.0
     # via coloredlogs
+hyperframe==6.1.0
+    # via h2
 idna==3.11
     # via
     #   anyio
@@ -259,7 +267,7 @@ llama-index-instrumentation==0.4.2
     # via llama-index-workflows
 llama-index-llms-ollama==0.9.0
     # via -r requirements.in
-llama-index-llms-openai==0.6.8
+llama-index-llms-openai==0.6.9
     # via
     #   llama-index
     #   llama-index-cli
@@ -326,6 +334,7 @@ numpy==2.2.6
     #   onnxruntime
     #   opencv-python
     #   pandas
+    #   qdrant-client
     #   rapidocr
     #   safetensors
     #   scipy
@@ -334,7 +343,7 @@ numpy==2.2.6
     #   transformers
 oauthlib==3.3.1
     # via requests-oauthlib
-ollama==0.6.0
+ollama==0.6.1
     # via
     #   llama-index-embeddings-ollama
     #   llama-index-llms-ollama
@@ -342,7 +351,7 @@ omegaconf==2.3.0
     # via rapidocr
 onnxruntime==1.23.2
     # via chromadb
-openai==2.7.2
+openai==2.8.0
     # via
     #   llama-index-embeddings-openai
     #   llama-index-llms-openai
@@ -407,19 +416,22 @@ pluggy==1.6.0
     # via
     #   docling
     #   pytest
-polyfactory==2.22.4
+polyfactory==3.0.0
     # via docling
+portalocker==3.2.0
+    # via qdrant-client
 posthog==5.4.0
     # via chromadb
 propcache==0.4.1
     # via
     #   aiohttp
     #   yarl
-protobuf==6.33.0
+protobuf==6.33.1
     # via
     #   googleapis-common-protos
     #   onnxruntime
     #   opentelemetry-proto
+    #   qdrant-client
 psutil==7.1.3
     # via accelerate
 pyasn1==0.6.1
@@ -450,6 +462,7 @@ pydantic==2.12.4
     #   ollama
     #   openai
     #   pydantic-settings
+    #   qdrant-client
 pydantic-core==2.41.5
     # via pydantic
 pydantic-settings==2.12.0
@@ -461,7 +474,7 @@ pygments==2.19.2
     #   rich
 pylatexenc==2.10
     # via docling
-pypdf==6.2.0
+pypdf==6.3.0
     # via llama-index-readers-file
 pypdfium2==4.30.0
     # via docling
@@ -494,8 +507,15 @@ python-pptx==1.0.2
     # via docling
 pytz==2025.2
     # via pandas
+pywin32==311 ; sys_platform == "win32"
+    # via
+    #   -r requirements.in
+    #   docling-parse
+    #   mpire
+    #   portalocker
 pyyaml==6.0.3
     # via
+    #   -r requirements.in
     #   accelerate
     #   chromadb
     #   docling-core
@@ -506,6 +526,8 @@ pyyaml==6.0.3
     #   rapidocr
     #   transformers
     #   uvicorn
+qdrant-client==1.15.1
+    # via -r requirements.in
 rapidocr==3.4.2
     # via docling
 referencing==0.37.0
@@ -534,7 +556,7 @@ rich==14.2.0
     # via
     #   chromadb
     #   typer
-rpds-py==0.28.0
+rpds-py==0.29.0
     # via
     #   jsonschema
     #   referencing
@@ -623,15 +645,15 @@ transformers==4.57.1
     # via
     #   docling-core
     #   docling-ibm-models
-tree-sitter==0.23.2
+tree-sitter==0.25.2
     # via docling-core
-tree-sitter-c==0.23.6
+tree-sitter-c==0.24.1
     # via docling-core
 tree-sitter-java==0.23.5
     # via docling-core
-tree-sitter-javascript==0.23.1
+tree-sitter-javascript==0.25.0
     # via docling-core
-tree-sitter-python==0.23.6
+tree-sitter-python==0.25.0
     # via docling-core
 tree-sitter-typescript==0.23.2
     # via docling-core
@@ -692,6 +714,7 @@ urllib3==2.3.0
     # via
     #   elastic-transport
     #   kubernetes
+    #   qdrant-client
     #   requests
 uvicorn[standard]==0.38.0
     # via
@@ -703,6 +726,10 @@ websocket-client==1.9.0
     # via kubernetes
 websockets==15.0.1
     # via uvicorn
+wrapt==1.17.3
+    # via
+    #   deprecated
+    #   llama-index-core
 xlsxwriter==3.2.9
     # via python-pptx
 yarl==1.22.0
