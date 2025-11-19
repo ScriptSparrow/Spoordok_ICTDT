@@ -14,17 +14,6 @@ Development van een Digital Twin voor het Spoordok gebied in Leeuwarden. De simu
 
 ---
 
-## Deadlines
-
-| Datum | Deliverable |
-|-------|-------------|
-| 23 november 2025 | Plan van Aanpak |
-| 18 januari 2026 | Onderzoeksrapport |
-| 18 januari 2026 | Digital Twin Product + Tests + Git History |
-| 18 januari 2026 | Professional Skills Portfolio |
-
----
-
 ## Tech Stack
 
 **Backend**: 
