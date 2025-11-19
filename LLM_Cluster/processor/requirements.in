@@ -7,7 +7,17 @@ llama-index-llms-ollama
 llama-index-embeddings-ollama
 llama-index-vector-stores-elasticsearch
 llama-index-vector-stores-chroma
-llama-index-readers-docling
 python-multipart
 pyyaml
 pywin32; sys_platform == 'win32'
+backports.asyncio-run; python_version < '3.7'
+
+# macOS-specific OCR package
+ocrmac; sys_platform == 'darwin'
+
+# macOS-specific PyObjC frameworks (only install on macOS)
+pyobjc-core; sys_platform == 'darwin'
+pyobjc-framework-vision; sys_platform == 'darwin'
+pyobjc-framework-cocoa; sys_platform == 'darwin'
+pyobjc-framework-coreml; sys_platform == 'darwin'
+pyobjc-framework-quartz; sys_platform == 'darwin'

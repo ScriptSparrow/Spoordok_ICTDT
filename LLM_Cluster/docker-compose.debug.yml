@@ -1,0 +1,12 @@
+include:
+  - ./docker-compose.debug.common.yml
+
+services:
+  
+  ollama:
+    extends:
+      file: ./processor/docker-compose.shared.yml
+      service: ollama
+    networks:
+      - spoordok_network
+

@@ -1,10 +1,15 @@
+from enum import Enum
 import os
-import torch
 import logging
-from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
-from docling.datamodel import vlm_model_specs
 from yaml import safe_load
 
+class EmbeddingModelConfig:
+    MODEL_NAME: str
+    VECTOR_SIZE: int
+
+    def __init__(self, model_name: str, vector_size: int) -> None:
+        self.MODEL_NAME = model_name
+        self.VECTOR_SIZE = vector_size 
 
 class Prompts:
     PERSONAS: dict[str, str]
@@ -37,16 +42,19 @@ class Config:
     IMAGE_MODELS_PATH: str = os.environ.get("IMAGE_MODELS_PATH", "/models")
     Prompts = Prompts()
 
-    VECTOR_SIZE: int = 512
+    EMBEDDING_VECTOR_SIZE: int = 512
 
-    DEFAULT_VLM_MODEL : str = "qwen-small"
+    DEFAULT_VLM_MODEL : str = "default"
     VLM_MODELS = {
-        "qwen-small": "qwen3-vl:2b",
-        "qwen-medium": "qwen3-vl:4b",
+        "default" : "qwen3-vl:2b",
+        "default-mlx" : "qwen3-vl:4b-instruct-q8_0",
+        "mlx-large" : "qwen3-vl:30b-a3b-instruct",
 
-        "llava-small" : "llava:2b",
+        "qwen-mlx-large": "qwen3-vl:30b-a3b",
+        "qwen-mlx": "qwen2-vl:7b",
+        "qwen-small": "qwen2-vl:2b",
 
-        "gemma-medium" : "gemma3:4b",
+        "moondream-small" : "moondream:1.8b",
     }
 
 
@@ -55,10 +63,16 @@ class Config:
     }
 
     DEFAULT_EMBEDDING_MODEL_TYPE: str = "gemma-embedding"
-    EMBEDDING_MODELS = {
+    EMBEDDING_MODELS : dict[str, EmbeddingModelConfig] = {
 
-        "gemma-embedding" : "embeddinggemma:300m",
-        "nomic": "nomic-embed-text:v1.5"
+        "gemma-embedding" : EmbeddingModelConfig(
+            model_name="embeddinggemma:300m",
+            vector_size=768
+        ),
+        "nomic": EmbeddingModelConfig(
+            model_name="nomic-embed-text:v1.5",
+            vector_size=768 #Check this as Nomic has variable embeddings
+        ),
     }
 
     @classmethod
@@ -71,7 +85,7 @@ class Config:
         return cls.VLM_MODELS[model_type]
     
     @classmethod
-    def get_embedding_model(cls, model_type: str | None = None) -> str:
+    def get_embedding_model(cls, model_type: str | None = None) -> EmbeddingModelConfig:
         """Get embedding model name by type. Falls back to default if not specified or not found."""
         model_type = model_type or cls.DEFAULT_EMBEDDING_MODEL_TYPE
         if model_type not in cls.EMBEDDING_MODELS:
@@ -84,8 +98,4 @@ class Config:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-cudas = torch.cuda.device_count()
-logger.info(f"CUDA devices available: {cudas}")
 
-for i in range(cudas):
-    logger.info(f"CUDA Device {i}: {torch.cuda.get_device_name(i)}")

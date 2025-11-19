@@ -1,0 +1,27 @@
+include:
+  - ./docker-compose.debug.common.yml
+
+services:
+  
+  ollama:
+    extends:
+      file: ./processor/docker-compose.shared.yml
+      service: ollama
+    networks:
+      - spoordok_network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: ["gpu"]
+
+
+  processor:
+    extends:
+      file: ./processor/docker-compose.yml
+      service: processor-debug
+    networks:
+      - spoordok_network
+
+
+      

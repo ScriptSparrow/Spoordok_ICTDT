@@ -7,11 +7,18 @@ from qdrant_client.models import (
     FieldCondition, 
     Range,
     NamedVector,
-    PayloadSchemaType
+    PayloadSchemaType,
+    UpdateResult
 )
+from vec_db.classes import ContextCreationResult
 from config import Config
 from typing import List, Dict, Optional
 from uuid import uuid4
+import logging
+
+
+
+logger = logging.getLogger(__name__)
 
 class QDrantConnector:
 
@@ -21,41 +28,48 @@ class QDrantConnector:
             api_key=None
         )
 
-        self.vector_size = Config.VECTOR_SIZE or 512
-
-
-    def create_context(self, context_id: str):
+    def create_context(self, context_id: str, embedding_size: Optional[int] = None) -> ContextCreationResult:
         """Create a collection with named vectors for multi-modal search."""
-        self.client.create_collection(
-            collection_name=context_id,
-            vectors_config={
-                "image": VectorParams(
-                    size=self.vector_size,
-                    distance=Distance.COSINE
-                ),
-                "caption": VectorParams(
-                    size=self.vector_size,
-                    distance=Distance.COSINE
-                )
-            }
-        )
-        
-        # Create indexes for efficient filtering
-        self.client.create_payload_index(
-            collection_name=context_id,
-            field_name="sequence_number",
-            field_schema=PayloadSchemaType.INTEGER
-        )
+        if embedding_size is None:
+            embedding_size = Config.EMBEDDING_VECTOR_SIZE
+
+        collections = self.client.get_collections().collections
+        if any(col.name == context_id for col in collections):
+            return ContextCreationResult.ALREADY_EXISTS
+
+        try: 
+
+            self.client.create_collection(
+                collection_name=context_id,
+                vectors_config={
+                    "image": VectorParams(
+                        size=embedding_size,
+                        distance=Distance.COSINE
+                    ),
+                    "caption": VectorParams(
+                        size=embedding_size,
+                        distance=Distance.COSINE
+                    )
+                }
+            )
+            
+            # Create indexes for efficient filtering
+            result = self.client.create_payload_index(
+                collection_name=context_id,
+                field_name="sequence_number",
+                field_schema=PayloadSchemaType.INTEGER
+            )
+
+            return ContextCreationResult.SUCCESS
+
+        except Exception as e:
+            logger.error(f"Error creating context '{context_id}': {e}")
+            return ContextCreationResult.FAILURE
+
         
     def delete_context(self, context_id: str):
         """Delete a context (collection) in QDrant."""
         self.client.delete_collection(collection_name=context_id)
-
-    def clean_context(self, context_id: str):
-        """Clean (delete all points) in a context (collection) in QDrant."""
-        # Need to recreate with the same multi-modal config
-        self.client.delete_collection(collection_name=context_id)
-        self.create_context(context_id)
 
     def store_image_with_caption(
         self, 

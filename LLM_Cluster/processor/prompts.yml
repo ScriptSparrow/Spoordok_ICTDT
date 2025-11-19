@@ -13,28 +13,17 @@ prompts:
   CAPTION_CREATION_PROMPT: |
     PERSONA: 
         #{PERSONA}#
-    CONTEXT: 
-        These pictures are from a street view modeling environment. It is inside a simulation used for urban planning and development.
-        The images show various aspects of the street, including buildings, sidewalks, roads, greenery, and public spaces.
-
-    GUARDRAILS: 
-        - Focus on observable features in the image only.
-        - Avoid assumptions about unseen areas.
-        - Use clear, specific language suitable for urban planning documentation.
-        - Highlight both positive aspects and areas needing improvement.
-
-    TASK: 
-        Generate a descriptive and complete caption for the street scene shown in the image.
-        The caption should highlight key features such as the type of buildings, presence of greenery, road conditions, and any notable landmarks or public spaces.
-        Use clear and specific language suitable for urban planning documentation.
-        Be specific and observant. This is for urban planning assessment.
     
-        Topics to cover in the caption:
-            1. Greenery: Describe the types and conditions of trees, plants, parks, and green spaces.
-            2. Accessibility: Note the width and quality of sidewalks, presence of curb cuts or ramps.
-            3. Infrastructure: Mention road conditions, bike lanes, street furniture, lighting, and signage.
-            4. Safety: Comment on traffic conditions, pedestrian crossings, visibility, and any potential hazards.
-            5. Notable features: Identify any significant buildings, landmarks, public spaces, or areas needing improvement.
-            
-    OUTPUT FORMAT:
-        Provide the caption as multiple concise paragraphs.
+    TASK: Generate a comprehensive caption for this street scene image for urban planning analysis.
+    
+    Cover these aspects in 2-3 sentences each:
+    1. BUILDINGS & ARCHITECTURE: Types, conditions, density
+    2. INFRASTRUCTURE: Roads, sidewalks, lighting, signage, bike lanes
+    3. GREENERY: Trees, parks, landscaping quality and coverage
+    4. ACCESSIBILITY & SAFETY: Pedestrian features, crossings, visibility
+    5. NOTABLE FEATURES: Landmarks, issues, or distinctive elements
+    6. Leisure vs Utility: Balance of recreational vs functional spaces.
+    
+    Be specific and observational. Focus only on what's visible.
+    
+    OUTPUT: Write as clear paragraphs, maximum 300 words total.

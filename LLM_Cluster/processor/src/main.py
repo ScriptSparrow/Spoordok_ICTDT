@@ -1,12 +1,22 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import Optional
+from fastapi.concurrency import asynccontextmanager
 from fastapi.responses import RedirectResponse
-import uvicorn
+
 
 from routers import health, process_doc, prompts_config
 
-app = FastAPI(title="LLM Cluster API", version="1.0.0")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+
+app = FastAPI(
+    title="LLM Cluster API", 
+    version="1.0.0",
+    lifespan=lifespan
+    )
+
 
 
 @app.get("/")

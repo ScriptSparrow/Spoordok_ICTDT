@@ -1,0 +1,32 @@
+
+services:
+  streamlit: 
+    extends:
+      file: ./streamlit_app/docker-compose.yml
+      service: streamlit
+    environment: 
+      - API_BASE_URL=http://rag-entry:8000
+      - PLATFORM_TYPE=${PLATFORM_TYPE:-linux}
+    networks:
+      - spoordok_network
+    depends_on:
+      - rag-entry
+
+  qdrant:
+    extends:
+      file: ./processor/docker-compose.shared.yml
+      service: qdrant
+    networks:
+      - spoordok_network
+
+  rag-entry:
+    extends:
+      file: ./processor/docker-compose.yml
+      service: rag-entry-debug
+    networks:
+      - spoordok_network
+
+networks:
+  spoordok_network:
+    name: spoordok_network
+    driver: bridge

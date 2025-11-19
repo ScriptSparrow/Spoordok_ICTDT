@@ -1,0 +1,32 @@
+[global]
+# Set to false to disable watching files for changes
+developmentMode = false
+
+[server]
+# The port where the server will listen for client and browser connections
+port = 8501
+
+# The IP address where the server will listen for client and browser connections
+address = "0.0.0.0"
+
+# Enable CORS support
+enableCORS = false
+
+# Enable XSRF protection
+enableXsrfProtection = true
+
+[theme]
+# Primary accent color for interactive elements
+primaryColor = "#FF6B6B"
+
+# Background color for the main content area
+backgroundColor = "#FFFFFF"
+
+# Background color used for the sidebar and most interactive widgets
+secondaryBackgroundColor = "#F0F2F6"
+
+# Color used for almost all text
+textColor = "#262730"
+
+# Font family for all text in the app
+font = "sans serif"

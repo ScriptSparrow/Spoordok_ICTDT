@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Attach to Docker (Nvidia)",
+            "name": "Python: Attach to Docker",
             "type": "debugpy",
             "request": "attach",
             "connect": {
@@ -15,11 +15,11 @@
                     "remoteRoot": "/app"
                 }
             ],
-            "preLaunchTask": "python docker-compose up debug (nvidia)",
-            "postDebugTask": "python docker-compose down (nvidia)"
+            "preLaunchTask": "python docker-compose up debug",
+            "postDebugTask": "python docker-compose down"
         },
         {
-            "name": "Python: Attach to Docker (Silicon Chip)",
+            "name": "Python: Attach to Docker (MAC)",
             "type": "debugpy",
             "request": "attach",
             "connect": {
@@ -32,8 +32,25 @@
                     "remoteRoot": "/app"
                 }
             ],
-            "preLaunchTask": "python docker-compose up debug (mlx)",
-            "postDebugTask": "python docker-compose down (mlx)"
+            "preLaunchTask": "python docker-compose up debug (MAC)",
+            "postDebugTask": "python docker-compose down"
+        },
+        {
+            "name": "Python: Attach to Docker (GPU)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/LLM_Cluster/processor/src",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "preLaunchTask": "python docker-compose up debug (GPU)",
+            "postDebugTask": "python docker-compose down"
         }
     ]
 }

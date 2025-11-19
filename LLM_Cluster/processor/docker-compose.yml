@@ -3,12 +3,12 @@ include:
   - ./docker-compose.shared.yml
 
 services: 
-  processor:
+  rag-entry:
     build: 
       context: .
       dockerfile: Dockerfile
       target: release
-    container_name: llm_processor
+    container_name: rag-entry
     ports:
       - "8000:8000"
     profiles:
@@ -16,31 +16,20 @@ services:
     volumes:
       - ./.models:/models
 
-  processor-debug:
+  rag-entry-debug:
     build: 
       context: .
       dockerfile: Dockerfile
       target: debug
-    container_name: llm_processor_debug
+    container_name:  rag-entry
     ports:
       - "8000:8000"
       - "5678:5678"  # Debugger port
     environment: 
       - QDRANT_URL=http://qdrant:6333
-      - MODEL_TYPES=default
     volumes:
       - ./prompts.yml:/config/prompts.yml
       - ./src:/app
       - ./.models:/models
-    profiles:
-      - debug
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: ["gpu"]
-
-    networks:
-      - spoordok_network
 
   

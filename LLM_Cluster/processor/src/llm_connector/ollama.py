@@ -65,16 +65,30 @@ class OllamaConnector:
 
     def generate_caption(self, image_bytes: io.BytesIO, caption_prompt: str, model: str) -> str:
         """Generate a caption for the given image using Ollama."""
-        # Implementation to call Ollama API for caption generation
 
         self.__ensure_model(model)
 
         image_bytes.seek(0)
         img = Image.open(image_bytes).convert("RGB")
+        
+        # Resize image to reduce processing time - VLMs work fine with smaller images
+        max_size = 512  # Much smaller than original
+        img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+        
         buffer = io.BytesIO()
-        img.save(buffer, format="PNG")
+        # Use JPEG with good quality instead of PNG - much smaller file size
+        img.save(buffer, format="JPEG", quality=85, optimize=True)
         buffer.seek(0)
         image_b64 = base64.b64encode(buffer.read()).decode('utf-8')
+
+        options = {
+            "num_ctx": 3072,  # Good context for detailed responses
+            "temperature": 0.8,  # Focused but not too rigid
+            "top_p": 0.85,
+            "num_predict": 300,  # Limit to prevent overly long responses
+            "repeat_penalty": 1.1,  # Prevent repetition
+            "stop": ["\n\n\n"]  # Stop at excessive line breaks
+        }
 
         response = requests.post(
             f"{Config.OLLAMA_URL}/api/generate",
@@ -82,7 +96,10 @@ class OllamaConnector:
                 "model": model,
                 "prompt": caption_prompt,
                 "images": [image_b64],
-                "stream": False
+                "stream": False,
+                # Add performance options
+                "options": options,
+                "keep_alive": "10m"
             },
             timeout=60
         )
@@ -91,7 +108,14 @@ class OllamaConnector:
 
         if response.status_code == 200:
             result = response.json()
-            caption = result.get("text", "").strip()
+            caption = 'no caption created'
+            if 'text' in result and len(result['text'].strip()) > 0:
+                caption = result['text'].strip()
+            elif 'response' in result and len(result['response'].strip()) > 0:
+                caption = result['response'].strip()
+            elif 'thinking' in result and len(result['thinking'].strip()) > 0:
+                caption = result['thinking'].strip()
+
             self.logger.debug(f"Generated caption: {caption}")
             return caption
         
@@ -108,7 +132,7 @@ class OllamaConnector:
             f"{Config.OLLAMA_URL}/api/embed",
             json={
                 "model": model,
-                "texts": [caption]
+                "input": caption  # Changed from "texts" to "input"
             },
             timeout=60
         )
@@ -117,10 +141,27 @@ class OllamaConnector:
 
         if response.status_code == 200:
             result = response.json()
-            embedding = result.get("embeddings", [])[0]
-            self.logger.debug(f"Generated embedding of length {len(embedding)}")
-            return embedding
+            self.logger.debug(f"Response keys: {list(result.keys())}")
+            
+            # Try different response formats
+            embedding = None
+            if "embeddings" in result and result["embeddings"]:
+                # If it's a list of embeddings, take the first one
+                embedding = result["embeddings"][0] if isinstance(result["embeddings"][0], list) else result["embeddings"]
+            elif "embedding" in result:
+                # If it's a single embedding
+                embedding = result["embedding"]
+            elif isinstance(result, list) and result:
+                # If the entire response is the embedding
+                embedding = result[0] if isinstance(result[0], list) else result
+            
+            if embedding and len(embedding) > 0:
+                self.logger.debug(f"Generated embedding of length {len(embedding)}")
+                return embedding
+            else:
+                self.logger.error("Empty embedding received from Ollama")
+                return []
         
         else:
-            self.logger.error(f"Failed to generate embedding: {response.status_code}")
+            self.logger.error(f"Failed to generate embedding: {response.status_code} - {response.text}")
             return []

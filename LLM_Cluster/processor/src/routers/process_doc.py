@@ -1,8 +1,9 @@
 import io
 import logging
-from fastapi import APIRouter, HTTPException, UploadFile, Body
+from fastapi import APIRouter, HTTPException, Header, UploadFile, Body
 from pydantic import BaseModel
 from typing import Optional
+from vec_db.classes import ContextCreationResult
 from llm_connector.ollama import OllamaConnector
 from config import Config
 from vec_db.vec_db import QDrantConnector
@@ -29,19 +30,24 @@ async def get_models():
         "embedding_models": Config.EMBEDDING_MODELS
     }
 
-
 @router.post("/{context_id}/index")
-async def create_index(context_id: str):
+async def create_index(
+    context_id: str,
+    embedding_model:  str = Header(Config.DEFAULT_EMBEDDING_MODEL_TYPE, description="Embedding model to use")
+    ):
     """Create an index"""
+    model = Config.get_embedding_model(embedding_model)
+    result = vector_db.create_context(context_id=context_id, embedding_size=model.VECTOR_SIZE)
+    if result == ContextCreationResult.ALREADY_EXISTS:
+        raise HTTPException(status_code=409, detail=f"Index '{context_id}' already exists")
 
-    vector_db.create_context(context_id=context_id)
     logger.info(f"Index '{context_id}' created")
     return {
         "index_name": context_id,
         "status": "success",
+        "vector_size": model.VECTOR_SIZE,
         "message": f"Index '{context_id}' created successfully"
-    }   
-    
+    }
 
 @router.delete("/{context_id}/index")
 async def delete_index(context_id: str):
@@ -53,17 +59,6 @@ async def delete_index(context_id: str):
         "index_name": context_id,
         "status": "success",
         "message": f"Index '{context_id}' deleted successfully"
-    }
-
-@router.put("/{context_id}/index")
-async def clean_index(context_id: str):
-    """Clean (delete all documents) in a context-specific index"""
-    vector_db.clean_context(context_id=context_id)
-    logger.info(f"Index '{context_id}' cleaned")
-    return {
-        "index_name": context_id,
-        "status": "success",
-        "message": f"Index '{context_id}' cleaned successfully"
     }
 
 @router.get("/{context_id}/index/captions")
@@ -79,7 +74,12 @@ async def get_index_status(context_id: str):
     }
 
 @router.post("/{context_id}/index/image")
-async def index_document(context_id: str, image: UploadFile):
+async def index_document(
+        context_id: str, 
+        image: UploadFile,
+        vlm_model_name: str = Header(Config.DEFAULT_VLM_MODEL , description="VLM model to use"),
+        embedding_model:  str = Header(Config.DEFAULT_EMBEDDING_MODEL_TYPE, description="Embedding model to use")
+    ):
     """Index an image into a context-specific index"""
     try:
         content = await image.read()
@@ -90,8 +90,11 @@ async def index_document(context_id: str, image: UploadFile):
         )
 
         with io.BytesIO(content) as bytes_io: 
-            caption = ollama_connector.generate_caption(bytes_io, caption_prompt=caption_prompt, model=Config.get_vlm_model())
-            caption_embedding = ollama_connector.generate_caption_embedding(caption, model=Config.get_embedding_model())
+            vlm_model = Config.get_vlm_model(vlm_model_name)
+            caption = ollama_connector.generate_caption(bytes_io, caption_prompt=caption_prompt, model=vlm_model)
+
+            embedding_model_config = Config.get_embedding_model()
+            caption_embedding = ollama_connector.generate_caption_embedding(caption, model=embedding_model_config.MODEL_NAME)
 
             doc_id = vector_db.store_image_with_caption(
                 context_id=context_id,
