@@ -30,4 +30,14 @@ build/
 !**/src/test/**/build/
 
 ### VS Code ###
-.vscode/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+
+### Python ###
+venv
+.models
+.ollama-data
+.elastic-data
+.qdrant-data
+__pycache__
