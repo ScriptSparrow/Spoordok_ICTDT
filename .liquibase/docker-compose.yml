@@ -1,0 +1,17 @@
+
+
+services:
+  liquibase:
+    container_name: liquibase
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      LIQUIBASE_COMMAND_URL: ${DATABASE_URL:-jdbc:postgresql://db:5432/mydatabase}
+      LIQUIBASE_COMMAND_USERNAME: ${DB_USERNAME:-myuser}
+      LIQUIBASE_COMMAND_PASSWORD: ${DB_PASSWORD:-mypassword}
+      LIQUIBASE_COMMAND_CHANGELOG_FILE: changelog-root.yml
+    volumes:
+      - ./changelogs:/liquibase/changelog/changelogs
+      - ./changelog-root.yml:/liquibase/changelog/changelog-root.yml
+    command: update --logLevel=DEBUG

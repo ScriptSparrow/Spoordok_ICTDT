@@ -1,0 +1,45 @@
+
+## Docker Compose file for Spoordok ICTDT project
+
+## Define common environment variables these are on top of .env file variables
+## Some are duplicated/referenced again for clarity
+x-common-variables: &common-variables
+  DB_NAME: ${DB_NAME:-mydatabase}
+  DB_USERNAME: ${DB_USERNAME:-myuser}
+  DB_PASSWORD: ${DB_PASSWORD:-mypassword}
+  DATABASE_URL: jdbc:postgresql://db:5432/${DB_NAME:-mydatabase}
+  API_URL: http://spoordock_api:6001
+
+
+services:
+
+  #database service
+  db:
+    extends:
+      file: ./.db/docker-compose.yml
+      service: db
+    container_name: postgres_db
+    environment:
+      <<: *common-variables
+    networks:
+      - spoordok_network
+
+  #liquibase service (Migrates and sets up the database)
+  liquibase:
+    extends:
+      file: ./.liquibase/docker-compose.yml
+      service: liquibase
+    container_name: liquibase
+    environment:
+      <<: *common-variables
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+        required: true
+    networks:
+      - spoordok_network
+
+networks:
+  spoordok_network:
+    driver: bridge
