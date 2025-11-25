@@ -1,12 +1,12 @@
 public class GebouwTypeTemplate {
     // Een gebouw type template omschrijft gegevens die gedeeld worden door verschillende gebouwen van hetzelfde type
 
-    int id;
-    String typeNaam;
-    String bestemming;
-    double verdiepingsHoogte;
-    double kosten;
-    String kleur;
-    // array possibleTextures : string [];
+    private int id;
+    private String typeNaam;
+    private String bestemming;
+    private double verdiepingsHoogte;
+    private double kosten;
+    private String kleur;
+    // private array possibleTextures : string [];
 
 }
