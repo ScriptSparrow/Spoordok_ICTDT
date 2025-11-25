@@ -1,3 +1,4 @@
+HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -29,18 +30,4 @@ build/
 !**/src/test/**/build/
 
 ### VS Code ###
-.vscode/*
-## keep files that describe how to start and launch projects
-!.vscode/launch.json
-!.vscode/tasks.json
-
-## Db data
-.db_data
-
-### Python ###
-venv
-.models
-.ollama-data
-.elastic-data
-.qdrant-data
-__pycache__
+.vscode/

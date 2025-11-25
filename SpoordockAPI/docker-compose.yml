@@ -1,0 +1,30 @@
+
+
+services:
+  api: 
+    container_name: spoordock_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "6001:6001"
+    
+  api-debug:
+    container_name: spoordock_api_debug
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    volumes:
+      - ./src:/workspace/src
+      - ./pom.xml:/workspace/pom.xml
+      - ./target/classes:/workspace/target/classes
+    ports:
+      - "6001:6001"
+      - "5005:5005"  # JDWP debug port
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6001/health" ]
+      interval: 3s
+      timeout: 2s
+      start_period: 5s
+      retries: 5
