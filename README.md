@@ -67,8 +67,6 @@ spoordok-icdt/
     De basis elementen. 
 
 [docker-compose.debug-api.yml](docker-copmose.debug.yml):
-    
-
 
 
 ## Quick Links
