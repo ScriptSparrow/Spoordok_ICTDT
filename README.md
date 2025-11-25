@@ -40,8 +40,8 @@ Development van een Digital Twin voor het Spoordok gebied in Leeuwarden. De simu
 
 ## Repository Structuur
 ```
-spoordok-digital-twin/
-├── backend/                  # Spring Boot API
+spoordok-icdt/
+├── SpoordockAPI/                  # Spring Boot API
 │   ├── src/                  # Java/Kotlin code
 │   ├── resources/            # Configuratiebestanden
 │   └── tests/                # Unit/integration tests voor backend (JUnit)
@@ -55,6 +55,21 @@ spoordok-digital-twin/
 ```
 
 ---
+
+## SpoordockAPI
+
+[Readme here](./SpoordockAPI/Readme.md)
+
+
+## Docker Compose
+
+[docker-compose.base.yml](docker-compose.base.yml) :
+    De basis elementen. 
+
+[docker-compose.debug-api.yml](docker-copmose.debug.yml):
+    
+
+
 
 ## Quick Links
 
