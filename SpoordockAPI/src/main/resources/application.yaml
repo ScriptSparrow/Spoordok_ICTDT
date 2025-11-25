@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: spoordock
+
+  datasource:
+    url: jdbc:postgresql://db:5432/${DB_NAME}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+springdoc:
+  swagger-ui:
+    path: /swagger
+    enabled: true
+
+  api-docs:
+    enabled: true
