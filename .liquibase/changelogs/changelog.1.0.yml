@@ -1,16 +1,73 @@
-
 databaseChangeLog:
+  - changeSet:
+      id: 0
+      author: init-script
+      comment: Enable PostGIS extension
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS postgis;
+      rollback:
+        - sql:
+            sql: DROP EXTENSION IF EXISTS postgis;
+
   - changeSet:
       id: 1
       author: init-script
       changes:
-        - createTable:
-            tableName: example_table
+        - createTable: 
+            tableName: gebouwtypes
             columns:
               - column:
                   name: id
-                  type: int
-                  autoIncrement: true
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: naam
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: omschrijving
+                  type: text
+                  constraints:
+                    nullable: true
+              - column: 
+                  name: bestemming
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column: 
+                  name: kosten_per_m3
+                  type: double precision
+                  constraints:
+                    nullable: false
+              - column: 
+                  name: verdiepings_hoogte
+                  type: double precision
+                  constraints:
+                    nullable: false
+              - column:
+                  name: kleur
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column: 
+                  name: possible_textures
+                  type: text
+                  constraints:
+                    nullable: true
+
+        - createTable:
+            tableName: polygones
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
                   constraints:
                     primaryKey: true
                     nullable: false
@@ -20,6 +77,89 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: created_at
-                  type: datetime
-                  defaultValueComputed: CURRENT_TIMESTAMP
+                  name: gebouwtype
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_polygones_gebouwtypes
+                    references: gebouwtypes(id)
+              - column:
+                  name: punten
+                  type: geometry(PolygonZ, 4326)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: hoogte
+                  type: double precision
+                  constraints:
+                    nullable: false
+
+      rollback:
+        - dropTable:
+            tableName: polygones
+        - dropTable:
+            tableName: gebouwtypes
+
+  - changeSet:
+      id: 2
+      author: init-script
+      changes:
+        - createTable:
+            tableName: wegtypes
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: standaard_breedte
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: gebruikers
+                  type: text[]
+                  constraints:
+                    nullable: false
+              - column:
+                  name: texture
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+
+        - createTable:
+            tableName: wegsegmenten
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: points
+                  type: geometry(LineStringZ, 4326)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: breedte
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: wegtype
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_wegsegmenten_wegtypes
+                    references: wegtypes(id)
+
+      rollback:
+        - dropTable:
+            tableName: wegsegmenten
+        - dropTable:
+            tableName: wegtypes
