@@ -18,12 +18,11 @@ services:
     extends:
       file: ./.db/docker-compose.yml
       service: db
-    container_name: postgres_db
     environment:
       <<: *common-variables
     networks:
       - spoordok_network
-
+  
   #liquibase service (Migrates and sets up the database)
   liquibase:
     extends:
@@ -35,6 +34,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
         restart: true
         required: true
     networks:
