@@ -1,8 +1,7 @@
-
-
 services:
   db:
-    image: postgres:13
+    image: postgis/postgis:15-3.5
+    container_name: postgres_db
     environment:
       POSTGRES_USER: ${DB_USERNAME:-myuser}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-mysecretpassword}
@@ -12,9 +11,8 @@ services:
     volumes:
       - ./.db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
-      start_period: 3s
-      interval: 3s
-      timeout: 2s
-      retries: 10
-    
+      test: ["CMD-SHELL", "pg_isready --host=postgres_db -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 30s
+      interval: 5s
+      timeout: 5s
+      retries: 3
