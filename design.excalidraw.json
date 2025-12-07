@@ -1626,8 +1626,8 @@
     {
       "id": "bdbzhLRpWB6pn0iWbGLLC",
       "type": "rectangle",
-      "x": -1298.8400822556207,
-      "y": -1539.7671608854596,
+      "x": -1312.7744319604215,
+      "y": -1539.0704434002198,
       "width": 1554.7313447777087,
       "height": 513.2789987187537,
       "angle": 6.28114579694849,
@@ -1645,11 +1645,11 @@
         "type": 3
       },
       "seed": 623376447,
-      "version": 990,
-      "versionNonce": 1648549981,
+      "version": 1044,
+      "versionNonce": 583241045,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1764495016071,
+      "updated": 1765106679997,
       "link": null,
       "locked": false
     },
