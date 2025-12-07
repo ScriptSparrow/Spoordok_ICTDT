@@ -8,5 +8,6 @@ import java.util.UUID;
 
 public interface RoadTypeRepository extends CrudRepository<RoadTypeTemplate, UUID> {
 
-    Optional<RoadTypeTemplate> findById(UUID id);
+    // Onderstaande functie bestaat al in CrudRepo
+//    Optional<RoadTypeTemplate> findById(UUID id);
 }

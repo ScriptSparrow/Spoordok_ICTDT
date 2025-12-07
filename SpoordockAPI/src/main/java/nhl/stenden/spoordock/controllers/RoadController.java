@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 
 @RestController
-@RequestMapping("/swagger")
+@RequestMapping("/api/roads") // /api om verschil te maken tussen ... en html pages
 public class RoadController {
 
     private final RoadTypeRepository roadTypeRepository;
@@ -23,13 +23,8 @@ public class RoadController {
         this.roadService = roadService;
     }
 
-//    @GetMapping("/roads")
-//    public List<RoadDTO> getRoads() {
-//        return roadService.toDTO (roadTypeRepository.findAll());
-//    }
-
-    @GetMapping("/roads")
+    @GetMapping("list") // "list" ipv "/list", anders vanaf de root ipv "/api/road/list"
     public List<RoadDTO> getRoads() {
-        return Collections.singletonList(roadService.toDTO((RoadSegment) roadTypeRepository.findAll()));
+        return roadService.getRoadDTOs();
     }
 }
