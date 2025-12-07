@@ -8,4 +8,5 @@ public interface Mapper <DTO, ENTITY> {
     ENTITY toEntity(DTO dto);
 
     List<DTO> toDTOs(List<ENTITY> entities);
+    List<ENTITY> toEntities(List<DTO> dtos);
 }
