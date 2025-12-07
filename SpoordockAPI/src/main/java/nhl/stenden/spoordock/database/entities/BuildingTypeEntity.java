@@ -24,7 +24,7 @@ public class BuildingTypeEntity {
     @Column(name = "naam", nullable = false)
     private String name;
 
-    @Column(name = "beschrijving")
+    @Column(name = "omschrijving")
     private String description;
 
     @Column(name = "verdiepings_hoogte")

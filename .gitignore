@@ -18,6 +18,9 @@ target/
 *.iml
 *.ipr
 
+### Java Docker build ###
+**/.mvn/.cache
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
