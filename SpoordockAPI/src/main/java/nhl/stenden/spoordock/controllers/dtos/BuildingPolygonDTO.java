@@ -20,9 +20,14 @@ public class BuildingPolygonDTO {
     @NonNull
     private String name;
     
+    @NonNull
+    private String description;
+    
     @Nullable
     private BuildingTypeDTO buildingType;
 
+    
+    
     @NonNull
     private PolygonDTO polygon;
 
