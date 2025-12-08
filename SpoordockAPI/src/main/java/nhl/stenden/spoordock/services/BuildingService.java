@@ -3,13 +3,16 @@ package nhl.stenden.spoordock.services;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.boot.autoconfigure.info.ProjectInfoProperties.Build;
 import org.springframework.stereotype.Component;
-
+import nhl.stenden.spoordock.backgroundprocessor.BackgroundProcessor;
 import nhl.stenden.spoordock.controllers.dtos.BuildingPolygonDTO;
 import nhl.stenden.spoordock.controllers.dtos.BuildingTypeDTO;
+import nhl.stenden.spoordock.database.BuildingPolygonEmbeddingRepository;
 import nhl.stenden.spoordock.database.BuildingPolygonRepository;
 import nhl.stenden.spoordock.database.BuildingTypeRepository;
+import nhl.stenden.spoordock.database.entities.BuildingPolygonEntity;
+import nhl.stenden.spoordock.llmService.OllamaConnectorService;
+import nhl.stenden.spoordock.services.mappers.BuildingEmbeddingMapper;
 import nhl.stenden.spoordock.services.mappers.BuildingPolygonMapper;
 
 @Component
@@ -18,10 +21,20 @@ public class BuildingService {
     private final BuildingPolygonRepository buildingPolygonRepository;
     private final BuildingTypeRepository buildingTypeRepository;
     private final BuildingPolygonMapper buildingPolygonMapper = new BuildingPolygonMapper();
+    private final BackgroundProcessor backgroundProcessor;
+    private final OllamaConnectorService ollamaConnectorService;
+    private final BuildingPolygonEmbeddingRepository buildingPolygonEmbeddingRepository;
 
-    public BuildingService(BuildingPolygonRepository buildingPolygonRepository, BuildingTypeRepository buildingTypeRepository) {
+    public BuildingService(BuildingPolygonRepository buildingPolygonRepository, 
+                BuildingTypeRepository buildingTypeRepository, 
+                BackgroundProcessor backgroundProcessor,
+                OllamaConnectorService ollamaConnectorService,
+                BuildingPolygonEmbeddingRepository buildingPolygonEmbeddingRepository) {
         this.buildingPolygonRepository = buildingPolygonRepository;
         this.buildingTypeRepository = buildingTypeRepository;
+        this.backgroundProcessor = backgroundProcessor;
+        this.ollamaConnectorService = ollamaConnectorService;
+        this.buildingPolygonEmbeddingRepository = buildingPolygonEmbeddingRepository;
     }
 
     public List<BuildingPolygonDTO> getBuildingPolygons(boolean embedTypes){
@@ -48,12 +61,15 @@ public class BuildingService {
     public BuildingPolygonDTO addBuilding(BuildingPolygonDTO buildingDTO) {
         var entity = buildingPolygonMapper.toEntity(buildingDTO);
         var savedEntity = buildingPolygonRepository.save(entity);
+        scheduleEmbeddingTask(savedEntity);
         return buildingPolygonMapper.toDTO(savedEntity);
     }
 
+    
     public BuildingPolygonDTO updateBuilding(BuildingPolygonDTO buildingDTO) {
         var entity = buildingPolygonMapper.toEntity(buildingDTO);
         var savedEntity = buildingPolygonRepository.save(entity);
+        scheduleEmbeddingTask(savedEntity);
         return buildingPolygonMapper.toDTO(savedEntity);
     }
 
@@ -71,5 +87,26 @@ public class BuildingService {
             return Optional.empty();
         }
     }
+
+    //Embedding takes a long time, hence the need to do this in the background
+    //In general conversations don't start immediately after creating/updating a building, so this should be fine
+    private void scheduleEmbeddingTask(BuildingPolygonEntity buildingDTO) {
+
+        backgroundProcessor.submitTask(() -> {
+            String source = new BuildingEmbeddingMapper().toEmbeddableText(buildingDTO);
+            float[] embedding = ollamaConnectorService.createEmbedding(buildingDTO, source);
+            String modelName = ollamaConnectorService.getEmbeddingModelName();
+            buildingPolygonEmbeddingRepository.updateEmbedding(
+                buildingDTO.getBuildingId(), 
+                embedding, 
+                modelName,
+                source,
+                java.time.OffsetDateTime.now()
+            );
+
+        });
+
+    }
+    
 
 }
