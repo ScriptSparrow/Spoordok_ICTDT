@@ -1,0 +1,149 @@
+
+<html>
+<head>
+
+    <title>Test LLM</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
+    <style>
+        body{
+            height: 100vh;
+            background-color: darkslategray;
+            color: white;
+        }
+
+        .bg-bot {
+            background-color: #6c757d;
+        }
+
+        .bg-user {
+            background-color: #0d6efd;
+        }
+
+        #chat-container {
+            height: 80vh;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+    </style>
+
+    <script>
+
+        /// Appends a bot response message to the chat container and returns the message element for later updates
+        function appendBotResponse(initialText = "loading...") {
+            const wrapper = document.createElement("div");
+            wrapper.innerHTML = `<div class="row mb-2">
+                                    <div class="col-10">
+                                        <div class="p-3 bg-bot text-white rounded bot-message">
+                                            ${initialText}
+                                        </div>
+                                    </div>
+                                    <div class="col-2"></div>
+                                </div>`;
+            
+            const element = wrapper.firstElementChild;
+            document.getElementById("chat-container").appendChild(element);
+            
+            // Return the message div so you can update it later
+            return element.querySelector(".bot-message");
+        }
+
+        function toUserRow(prompt){
+            return `<div class="row mb-2">
+                        <div class="col-2"></div>
+                        <div class="col-10">
+                            <div class="p-3 bg-user text-white rounded">
+                                ${prompt}
+                            </div>
+                        </div>
+                    </div>`;
+        }
+
+        function appendUserPrompt(prompt) {
+            const userRow = toUserRow(prompt);
+            document.getElementById("chat-container").innerHTML += userRow;
+        }
+
+        async function streamBotResponse(botMessageElement, prompt) {
+
+            const id = crypto.randomUUID();
+            const response = await fetch(`/api/ai/chat/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: prompt })
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+
+            botMessageElement.textContent = ""; // Clear initial loading text
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                
+                // Parse SSE format: "data: ...\n\n"
+                const lines = chunk.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data:')) {
+                        const text = line.slice(5);
+                        console.log('Received:', text);
+                        // Append to your UI here
+                        botMessageElement.textContent += text;
+                    }
+                }
+            }
+
+            console.log("Bot response streaming completed.");
+
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const promptInput = document.getElementById("promptInput");
+
+            promptInput.addEventListener("keydown", function(event) {
+                if (event.key === "Enter") {
+                    const prompt = promptInput.value;
+                    console.log("User Prompt:", prompt);
+                    // Here you can add code to send the prompt to your backend or LLM service
+                    promptInput.value = ""; // Clear input after submission
+                    appendUserPrompt(prompt);
+
+                    const botMessageElement = appendBotResponse();
+                    streamBotResponse(botMessageElement, prompt);
+
+                    console.log("Bot response streaming started.");
+                }
+            });
+        });
+
+    </script>
+
+</head>
+<body>  
+
+<h1>Test LLM</h1>
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div id="chat-container" class="container">
+
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <input type="text" id="promptInput" class="form-control" placeholder="Enter your prompt here..." />
+    </div>
+</div>
+
+</body>
+</html>

@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class BackgroundProcessor {
 
-
     private final ExecutorService executorService = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor();
 
     private AtomicInteger scheduledTasks = new AtomicInteger(0);
