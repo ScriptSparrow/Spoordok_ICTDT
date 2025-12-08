@@ -12,51 +12,51 @@ databaseChangeLog:
             sql: DROP EXTENSION IF EXISTS vector;
 
   - changeSet:
-    id: 4
-    author: tim
-    comment: Store polygon embeddings in separate table
-    changes:
-      - createTable:
-          tableName: polygon_embeddings
-          columns:
-            - column:
-                name: polygon_id
-                type: uuid
-                constraints:
-                  primaryKey: true
-                  nullable: false
-                  referencedTableName: polygones
-                  referencedColumnNames: id
-                  foreignKeyName: fk_polygon_embeddings_polygones
-                  deleteCascade: true
-            - column:
-                name: embedding
-                type: vector(1536)
-                constraints:
-                  nullable: true
-            - column:
-                name: embedding_model
-                type: varchar(100)
-                constraints:
-                  nullable: true
-            - column:
-                name: embedding_updated_at
-                type: timestamptz
-                constraints:
-                  nullable: true
-            - column:
-                name: embedding_source
-                type: text
-                constraints:
-                  nullable: true
-              
-      - sql:
-          sql: >
-            CREATE INDEX IF NOT EXISTS idx_polygon_embeddings_ivfflat
-            ON polygon_embeddings USING ivfflat (embedding vector_l2_ops)
-            WITH (lists = 100);
-    rollback:
-      - sql:
-          sql: DROP INDEX IF EXISTS idx_polygon_embeddings_ivfflat;
-      - dropTable:
-          tableName: polygon_embeddings
+      id: 4
+      author: tim
+      comment: Store polygon embeddings in separate table
+      changes:
+        - createTable:
+            tableName: polygon_embeddings
+            columns:
+              - column:
+                  name: polygon_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    referencedTableName: polygones
+                    referencedColumnNames: id
+                    foreignKeyName: fk_polygon_embeddings_polygones
+                    deleteCascade: true
+              - column:
+                  name: embedding
+                  type: vector(1536)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: embedding_model
+                  type: varchar(100)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: embedding_updated_at
+                  type: timestamptz
+                  constraints:
+                    nullable: true
+              - column:
+                  name: embedding_source
+                  type: text
+                  constraints:
+                    nullable: true
+                
+        - sql:
+            sql: >
+              CREATE INDEX IF NOT EXISTS idx_polygon_embeddings_ivfflat
+              ON polygon_embeddings USING ivfflat (embedding vector_l2_ops)
+              WITH (lists = 100);
+      rollback:
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_polygon_embeddings_ivfflat;
+        - dropTable:
+            tableName: polygon_embeddings
