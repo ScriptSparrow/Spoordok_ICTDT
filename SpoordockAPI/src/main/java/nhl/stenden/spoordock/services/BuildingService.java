@@ -10,6 +10,7 @@ import nhl.stenden.spoordock.controllers.dtos.BuildingTypeDTO;
 import nhl.stenden.spoordock.database.BuildingPolygonEmbeddingRepository;
 import nhl.stenden.spoordock.database.BuildingPolygonRepository;
 import nhl.stenden.spoordock.database.BuildingTypeRepository;
+import nhl.stenden.spoordock.database.entities.BuildingPolygonEmbeddingEntity;
 import nhl.stenden.spoordock.database.entities.BuildingPolygonEntity;
 import nhl.stenden.spoordock.llmService.OllamaConnectorService;
 import nhl.stenden.spoordock.services.mappers.BuildingEmbeddingMapper;
@@ -91,19 +92,20 @@ public class BuildingService {
     //Embedding takes a long time, hence the need to do this in the background
     //In general conversations don't start immediately after creating/updating a building, so this should be fine
     private void scheduleEmbeddingTask(BuildingPolygonEntity buildingDTO) {
-
         backgroundProcessor.submitTask(() -> {
             String source = new BuildingEmbeddingMapper().toEmbeddableText(buildingDTO);
-            float[] embedding = ollamaConnectorService.createEmbedding(buildingDTO, source);
+            float[] embedding = ollamaConnectorService.createEmbedding(source);
             String modelName = ollamaConnectorService.getEmbeddingModelName();
-            buildingPolygonEmbeddingRepository.updateEmbedding(
-                buildingDTO.getBuildingId(), 
-                embedding, 
+
+            BuildingPolygonEmbeddingEntity embeddingEntity = new BuildingPolygonEmbeddingEntity(
+                buildingDTO.getBuildingId(),
+                embedding,
                 modelName,
                 source,
                 java.time.OffsetDateTime.now()
             );
 
+            buildingPolygonEmbeddingRepository.save(embeddingEntity);
         });
 
     }

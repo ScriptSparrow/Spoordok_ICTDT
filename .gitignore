@@ -47,3 +47,6 @@ venv
 .elastic-data
 .qdrant-data
 __pycache__
+
+### OLLAMA ###
+.ollama/.models
