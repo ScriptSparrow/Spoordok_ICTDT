@@ -72,8 +72,13 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: name
+                  name: naam
                   type: varchar(255)
+                  constraints:
+                    nullable: false
+               - column:
+                  name: omschrijving
+                  type: varchar(450)
                   constraints:
                     nullable: false
               - column:

@@ -1,5 +1,6 @@
 package nhl.stenden.spoordock.database.entities;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -10,9 +11,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.locationtech.jts.geom.Polygon;
 
 @Entity
@@ -20,6 +25,7 @@ import org.locationtech.jts.geom.Polygon;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class BuildingPolygonEntity {
 
     @Id
@@ -27,8 +33,11 @@ public class BuildingPolygonEntity {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID buildingId;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "naam", nullable = false)
     private String name;
+
+    @Column(name = "omschrijving", length = 450)
+    private String description;
 
     @JoinColumn(name = "gebouwtype")
     @ManyToOne(fetch = FetchType.LAZY)

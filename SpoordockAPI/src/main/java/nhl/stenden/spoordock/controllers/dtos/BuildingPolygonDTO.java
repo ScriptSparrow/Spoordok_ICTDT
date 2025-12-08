@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.springframework.lang.NonNull;
 
 import jakarta.annotation.Nullable;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,6 +14,7 @@ import nhl.stenden.spoordock.controllers.dtos.polygon.PolygonDTO;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class BuildingPolygonDTO {
 
     private UUID buildingId;
@@ -26,9 +28,8 @@ public class BuildingPolygonDTO {
     @Nullable
     private BuildingTypeDTO buildingType;
 
-    
-    
     @NonNull
     private PolygonDTO polygon;
-
+    
+    private double height;
 }

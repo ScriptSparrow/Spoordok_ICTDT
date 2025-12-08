@@ -19,41 +19,27 @@ public class BuildingPolygonMapper implements Mapper<BuildingPolygonDTO, Buildin
 
     @Override
     public BuildingPolygonDTO toDTO(BuildingPolygonEntity entity) {
-       
-        return new BuildingPolygonDTO()
-        {
-            {
-                setBuildingId(entity.getBuildingId());
-                setName(entity.getName());
-                setPolygon(mapPolygon(entity.getPolygon()));
-
-                if (entity.getBuildingType() != null) {
-                    setBuildingType(buildingTypeMapper.toDTO(entity.getBuildingType()));
-                } else {
-                    setBuildingType(null);
-                }
-            }
-        };
-
+        return new BuildingPolygonDTO(
+            entity.getBuildingId(),
+            entity.getName(),
+            entity.getDescription(),
+            entity.getBuildingType() != null ? buildingTypeMapper.toDTO(entity.getBuildingType()) : null,
+            mapPolygon(entity.getPolygon()),
+            entity.getHeight()
+        );
     }
 
     @Override
     public BuildingPolygonEntity toEntity(BuildingPolygonDTO dto) {
-       return new BuildingPolygonEntity()
-       {
-            {
-                setBuildingId(dto.getBuildingId());
-                setName(dto.getName());
-                setPolygon(mapPolygon(dto.getPolygon()));
 
-                if (dto.getBuildingType() != null) {
-                    setBuildingType(buildingTypeMapper.toEntity(dto.getBuildingType()));
-                } else {
-                    setBuildingType(null);
-                }
-            }
-       };
-        
+        return new BuildingPolygonEntity(
+            dto.getBuildingId(),
+            dto.getName(), 
+            dto.getDescription(),
+            dto.getBuildingType() != null ? buildingTypeMapper.toEntity(dto.getBuildingType()) : null,
+            mapPolygon(dto.getPolygon()),
+            dto.getHeight()
+        );
     }
 
     @Override
