@@ -40,6 +40,23 @@ services:
     networks:
       - spoordok_network
 
+  ollama:
+    extends:
+      file: ./.ollama/docker-compose.yml
+      service: ollama
+    container_name: ollama
+    networks:
+      - spoordok_network
+    # GPU support
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all 
+              capabilities: [gpu]
+  
+
 networks:
   spoordok_network:
     driver: bridge
