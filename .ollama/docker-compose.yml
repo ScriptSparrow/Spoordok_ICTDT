@@ -9,4 +9,9 @@ services:
       - "11434:11434"
     volumes:
       - ${OLLAMA_MODELS:-./models}:/root/.ollama
-  
+    environment:
+      # Keep models loaded in memory for 30 minutes (1800 seconds)
+      - OLLAMA_KEEP_ALIVE=30m
+      # Alternatively: Use seconds (1800) or -1 for indefinite
+      # - OLLAMA_KEEP_ALIVE=-1
+    # Optional: Pre-load specific models on startup

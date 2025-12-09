@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import nhl.stenden.spoordock.controllers.dtos.BuildingPolygonDTO;
 import nhl.stenden.spoordock.services.BuildingService;
 
@@ -44,14 +45,8 @@ public class BuildingController {
         @ApiResponse(responseCode = "200", description = "Building successfully created", content =  @Content(schema = @Schema(implementation = BuildingPolygonDTO.class))),
         @ApiResponse(responseCode = "400", description = "Invalid Building Type supplied", content = @Content)
     })
-    public ResponseEntity<?> addBuilding(@RequestBody BuildingPolygonDTO buildingDTO) {
-
-        if(buildingDTO == null) {
-            return ResponseEntity
-                .badRequest()
-                .body("Building data is required in the request body");
-        }
-
+    public ResponseEntity<?> addBuilding(@Valid @RequestBody BuildingPolygonDTO buildingDTO) {
+        
         //Validate if building type exists
         if(buildingService.buildingTypeExists(buildingDTO.getBuildingType()) == false) {
             return ResponseEntity

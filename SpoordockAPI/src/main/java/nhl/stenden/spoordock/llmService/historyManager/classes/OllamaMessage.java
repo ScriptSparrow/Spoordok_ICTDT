@@ -7,14 +7,14 @@ import lombok.Setter;
 
 @Getter @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class HistoricalMessage {
+public abstract class OllamaMessage {
 
     public Role role;
     public String content;
 
-    public HistoricalMessage(Role role, String content) {
+    public OllamaMessage(Role role, String content) {
         this.role = role;
         this.content = content;
     }
-
+    
 }

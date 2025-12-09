@@ -1,11 +1,15 @@
 package nhl.stenden.spoordock.llmService.dtos;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import nhl.stenden.spoordock.llmService.dtos.parameters.toolCall.ToolCall;
 
 @Getter
 @Setter
@@ -17,7 +21,6 @@ public class ChatResponse {
     private String model;
     private Message message;    
     
-
     @Getter
     @Setter
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -26,7 +29,8 @@ public class ChatResponse {
         private String content;
         private String thinking;
 
-        //TOOL calls can be added here later if we for instance may want the LLM to indicate it wants to retrieve other data.
+        @JsonProperty("tool_calls")
+        private List<ToolCall> toolCalls; 
     }
 
 }
