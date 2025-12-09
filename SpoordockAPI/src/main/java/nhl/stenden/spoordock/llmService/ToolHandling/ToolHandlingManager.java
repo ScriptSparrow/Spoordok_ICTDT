@@ -52,6 +52,12 @@ public class ToolHandlingManager {
                     ToolRequest toolRequest = new ToolRequest(function);
 
                     ToolFunctionData functionData = new ToolFunctionData(toolRequest, method, service);
+
+                    if(availableToolMethods.containsKey(name)) {
+                        log.warn("Duplicate tool method name detected: " + name);
+                        continue;
+                    }
+
                     availableToolMethods.put(name, functionData);
                 }
             }
@@ -78,8 +84,13 @@ public class ToolHandlingManager {
         ToolService serviceInstance = functionData.getServiceInstance();
         
         try {
-            // Currently assuming all parameters are of type String for simplicity
-            Object result = method.invoke(serviceInstance, function.getParameters().values().toArray());
+
+            Map<String, Object> params = function.getParameters();
+            if(params ==  null) {
+                params = new HashMap<>();
+            }
+
+            Object result = method.invoke(serviceInstance, params.values().toArray());
             return result.toString();
         } catch (Exception e) {
             log.error("Error invoking tool method: " + name, e);
