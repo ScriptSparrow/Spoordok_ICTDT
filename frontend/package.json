@@ -1,0 +1,17 @@
+{
+  "name": "frontend",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "cesium": "^1.135.0"
+  },
+  "devDependencies": {
+    "vite": "^7.2.4",
+    "vite-plugin-static-copy": "^3.1.4"
+  }
+}
+
+
