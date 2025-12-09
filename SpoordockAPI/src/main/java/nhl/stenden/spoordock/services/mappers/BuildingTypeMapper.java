@@ -1,5 +1,6 @@
 package nhl.stenden.spoordock.services.mappers;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import nhl.stenden.spoordock.controllers.dtos.BuildingTypeDTO;

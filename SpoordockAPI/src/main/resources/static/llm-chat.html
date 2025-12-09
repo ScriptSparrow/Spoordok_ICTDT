@@ -67,15 +67,20 @@
             document.getElementById("chat-container").innerHTML += userRow;
         }
 
+        const id = crypto.randomUUID();
+
         async function streamBotResponse(botMessageElement, prompt) {
 
-            const id = crypto.randomUUID();
+            const selectedModel = document.getElementById("modelSelect").value;
             const response = await fetch(`/api/ai/chat/${id}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'model': selectedModel
                 },
-                body: JSON.stringify({ message: prompt })
+                body: JSON.stringify({ 
+                    message: prompt,
+                })
             });
 
             const reader = response.body.getReader();
@@ -109,7 +114,7 @@
             const promptInput = document.getElementById("promptInput");
 
             promptInput.addEventListener("keydown", function(event) {
-                if (event.key === "Enter") {
+                if (event.key === "Enter" && !event.shiftKey) {
                     const prompt = promptInput.value;
                     console.log("User Prompt:", prompt);
                     // Here you can add code to send the prompt to your backend or LLM service
@@ -140,8 +145,22 @@
         </div>
     </div>
 
+
     <div class="row">
         <input type="text" id="promptInput" class="form-control" placeholder="Enter your prompt here..." />
+    </div>
+     <div class="row mb-3">
+        <div class="col-3">
+            <label for="modelSelect" class="form-label">Select Model:</label>
+        </div>
+        <div class="col-6">
+            <select id="modelSelect" class="form-select">
+                <option value="llama3.2:3b" selected>llama3.2:3b - Meta's Llama 3.2 (3B) - Balanced speed and quality</option>
+                <option value="qwen2:1.5b">qwen2:1.5b - Alibaba's Qwen2 (1.5B) - Very fast and lightweight</option>
+                <option value="phi3:mini">phi3:mini - Microsoft's Phi-3 Mini (3.8B) - Great for coding and reasoning</option>
+                <option value="mistral:7b">mistral:7b - Mistral 7B - High performance for complex tasks</option>
+            </select>
+        </div>
     </div>
 </div>
 

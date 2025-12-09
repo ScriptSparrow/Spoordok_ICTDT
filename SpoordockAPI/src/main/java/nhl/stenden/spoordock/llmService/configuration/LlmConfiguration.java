@@ -22,6 +22,7 @@ public class LlmConfiguration {
     @Getter @Setter
     public static class SystemPrompts {
         private String descriptionHelperPrompt;
+        private String defaultChatPrompt;
 
     }
 }

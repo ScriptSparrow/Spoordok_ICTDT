@@ -77,7 +77,7 @@ public class AiAgentController {
     
     private void streamResponse(SseEmitter emitter, UUID id, String model, String message) {
         try {
-            ollamaConnectorService.generateDescriptionHelperStream(id, message, model, text -> sendEvent(emitter, text));
+            ollamaConnectorService.startChatWithToolsStream(id, message, model, text -> sendEvent(emitter, text));
             emitter.complete();
         } catch (Exception e) {
             emitter.completeWithError(e);

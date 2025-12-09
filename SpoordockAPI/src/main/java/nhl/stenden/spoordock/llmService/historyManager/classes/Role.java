@@ -4,7 +4,8 @@ public enum Role {
 
     SYSTEM("system"),
     USER("user"),
-    ASSISTANT("assistant");
+    ASSISTANT("assistant"),
+    TOOL("tool");
 
     private String _role;
     private Role(String string){
@@ -15,5 +16,4 @@ public enum Role {
     public String toString() {
         return this._role;
     }
-
 }
