@@ -27,21 +27,24 @@ logging:
 
 llm:
   baseUrl: ${LLM_URL}
-  defaultModel: "llama3.2:3b"
+  defaultModel: "qwen3:8b"
   models: 
     # llama3.2:3b - Meta's Llama 3.2 (3B params). Good balance of speed and quality.
     # Strong at general conversation, reasoning, and following instructions.
-    - "llama3.2:3b"
-
+    - name: "llama3.2:3b"
+      contextLength: 8192
     # qwen3:8b - Qwen 3 (8B params) by Qwen AI. Larger model with strong capabilities.
     # Excels at complex reasoning, coding tasks, and detailed responses.
     # Good at tool calling and multi-turn dialogues.
-    - "qwen3:8b"
+    - name: "qwen3:8b"
+      contextLength: 40960
 
     # granite3.2:8b - Granite 3.2 (8B params) by Inflection AI.
     # Focused on helpfulness, safety, and alignment.
     # Great for applications needing friendly and informative interactions.
-    - granite3.2:8b
+    - name: granite3.2:8b
+      contextLength: 8192
+
   systemPrompts:
     descriptionHelperPrompt: >
       You are an expert in generating concise and informative descriptions based on provided data. 

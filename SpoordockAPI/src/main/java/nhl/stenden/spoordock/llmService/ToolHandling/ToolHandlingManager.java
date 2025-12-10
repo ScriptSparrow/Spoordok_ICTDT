@@ -5,11 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.catalina.startup.Tool;
 import org.springframework.stereotype.Component;
-
-import com.fasterxml.jackson.databind.deser.impl.CreatorCandidate.Param;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,7 +32,11 @@ public class ToolHandlingManager {
     }
 
     public ToolHandlingManager(List<ToolService> toolServices) {
-        
+        ensureLoaded(toolServices);
+    }
+
+    private void ensureLoaded(List<ToolService> toolServices){
+
         for (ToolService service : toolServices) {
         
             var methods = service.getClass().getMethods();
@@ -44,7 +44,7 @@ public class ToolHandlingManager {
                 if (method.isAnnotationPresent(ToolFunctionCall.class)) {
                     ToolFunctionCall annotation = method.getAnnotation(ToolFunctionCall.class);
                     
-                    String name = service.getClass().getSimpleName() + " | " + annotation.name();
+                    String name = annotation.name();
                     String description = annotation.description();
                     ObjectParameter rootParam = buildObjectParameter(method.getParameters());
 
@@ -62,6 +62,7 @@ public class ToolHandlingManager {
                 }
             }
         }
+
     }
 
     public List<ToolRequest> getAvailableTools() {
@@ -78,14 +79,14 @@ public class ToolHandlingManager {
             log.error("Tool method not found: " + name);
             return "Error: Tool method not found.";
         }
-
+        
         ToolFunctionData functionData = availableToolMethods.get(name);
         Method method = functionData.getMethod();
         ToolService serviceInstance = functionData.getServiceInstance();
         
         try {
 
-            Map<String, Object> params = function.getParameters();
+            Map<String, Object> params = function.getArguments();
             if(params ==  null) {
                 params = new HashMap<>();
             }
