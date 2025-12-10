@@ -8,7 +8,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -19,10 +21,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import nhl.stenden.spoordock.llmService.ToolHandling.ToolHandlingManager;
 import nhl.stenden.spoordock.llmService.configuration.LlmConfiguration;
+import nhl.stenden.spoordock.llmService.configuration.LlmConfiguration.ModelConfig;
 import nhl.stenden.spoordock.llmService.dtos.EmbeddingRequestBody;
 import nhl.stenden.spoordock.llmService.dtos.EmbeddingResponseBody;
-import nhl.stenden.spoordock.llmService.dtos.GenerateRequest;
-import nhl.stenden.spoordock.llmService.dtos.GenerateResponse;
+import nhl.stenden.spoordock.llmService.dtos.Options;
+import nhl.stenden.spoordock.llmService.dtos.ChatResponse.Message;
 import nhl.stenden.spoordock.llmService.dtos.parameters.ToolRequest.ToolRequest;
 import nhl.stenden.spoordock.llmService.dtos.parameters.toolCall.FunctionCall;
 import nhl.stenden.spoordock.llmService.dtos.parameters.toolCall.ToolCall;
@@ -31,7 +34,6 @@ import nhl.stenden.spoordock.llmService.dtos.ChatResponse;
 import nhl.stenden.spoordock.llmService.historyManager.IChatHistoryManager;
 import nhl.stenden.spoordock.llmService.historyManager.classes.BotMessage;
 import nhl.stenden.spoordock.llmService.historyManager.classes.OllamaMessage;
-import nhl.stenden.spoordock.llmService.historyManager.classes.Role;
 import nhl.stenden.spoordock.llmService.historyManager.classes.SystemMessage;
 import nhl.stenden.spoordock.llmService.historyManager.classes.ToolMessage;
 import nhl.stenden.spoordock.llmService.historyManager.classes.UserMessage;
@@ -44,6 +46,7 @@ public class OllamaConnectorService {
     
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final URI baseUrl;
+    private final Map<String, LlmConfiguration.ModelConfig> modelConfigs = new HashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final IChatHistoryManager historyManager;
     private final LlmConfiguration.SystemPrompts systemPrompts;
@@ -61,6 +64,11 @@ public class OllamaConnectorService {
         this.historyManager = historyManager;
         this.systemPrompts = configuration.getSystemPrompts();
         this.toolhandlingManager = toolHandlingManager;
+
+        for (LlmConfiguration.ModelConfig modelConfig : configuration.getModels()) {
+            modelConfigs.put(modelConfig.getName(), modelConfig);
+        }
+
     }
 
     /**
@@ -119,29 +127,28 @@ public class OllamaConnectorService {
      * @param model         the LLM model to use for generation
      * @param chunkReceived a consumer that receives each text chunk as it streams in
      */
-    public void generateDescriptionHelperStream(UUID chatId, String prompt, String model, Consumer<String> chunkReceived) {
+    public void generateDescriptionHelperStream(UUID chatId, String prompt, String model, Consumer<ChunkReceivedEventArgs> chunkReceived) {
         chatStream(chatId, prompt, systemPrompts.getDescriptionHelperPrompt(), model, chunkReceived);
     }
     
-    public void startChatWithToolsStream(UUID chatId, String prompt, String model, Consumer<String> chunkReceived) {
+    public void startChatWithToolsStream(UUID chatId, String prompt, String model, Consumer<ChunkReceivedEventArgs> chunkReceived) {
 
         String systemPrompt = systemPrompts.getDefaultChatPrompt();
         chatStreamWithTools(chatId, prompt, systemPrompt, model, true, 3, chunkReceived);
     }
 
-    private void chatStream(UUID chatId, String prompt, String systemPromp, String model, Consumer<String> chunkReceived) {
+    private void chatStream(UUID chatId, String prompt, String systemPromp, String model, Consumer<ChunkReceivedEventArgs> chunkReceived) {
         chatStreamWithTools(chatId, prompt, systemPromp, model, false, 1, chunkReceived);
     }
 
-    private void chatStreamWithTools(UUID chatId, String prompt, String systemPrompt, String model, boolean useTools, int maxLoops, Consumer<String> chunkReceived) {
+    private void chatStreamWithTools(UUID chatId, 
+            String prompt, 
+            String systemPrompt, 
+            String model, 
+            boolean useTools, 
+            int maxLoops, 
+            Consumer<ChunkReceivedEventArgs> chunkReceived)  {
         try{
-
-            systemPrompt += "\n You are allowed to use tools. \n"
-                + "When you find it useful to use a tool to answer the user's question, "
-                + "Make sure you put those tools in the proper tool field of your response"
-                + " and provide the necessary parameters."
-                + " If no tools are needed, just provide a normal answer."
-                ;
 
             OllamaMessage systemMessage = new SystemMessage(systemPrompt);
             historyManager.createHistoryIfNotExists(chatId, systemMessage);
@@ -149,17 +156,25 @@ public class OllamaConnectorService {
             OllamaMessage userMessage = new UserMessage(prompt);
             historyManager.addMessageToHistory(chatId, userMessage);
             
+            List<ToolRequest> tools = null;
+            if (useTools){
+                tools = toolhandlingManager.getAvailableTools();
+            }
+
+            ModelConfig modelConfig = modelConfigs.get(model);
+            if (modelConfig == null) {
+                throw new IllegalArgumentException("Model '" + model + "' is not configured.");
+            }
+
+            Options options = new Options(modelConfig.getContextLength());
+
             int loop = 0;
             boolean continueConversation = true;
             while(continueConversation) {
 
                 List<OllamaMessage> messages = historyManager.getHistory(chatId, 20);
-                List<ToolRequest> tools = null;
-                if (useTools){
-                    tools = toolhandlingManager.getAvailableTools();
-                }
-                
-                ChatRequest request = new ChatRequest(model, messages, tools);
+                ChatRequest request = new ChatRequest(model, messages, tools, options);
+                log.debug(objectMapper.writeValueAsString(request));
                 String jsonString = objectMapper.writeValueAsString(request);
 
                 HttpRequest httpRequest = HttpRequest.newBuilder()
@@ -177,23 +192,29 @@ public class OllamaConnectorService {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         ChatResponse chunk = objectMapper.readValue(line, ChatResponse.class);
-                        if (chunk.getMessage() != null) {
+                        Message message = chunk.getMessage();
+                        if (message != null) {
 
-                            if(chunk.getMessage().getContent() != null) {
+                            if(message.getContent() != null) {
+                                String content = message.getContent();
 
-                                String message = chunk.getMessage().getContent();
-                                log.debug("Chunk content: " + message);
-
-                                chunkReceived.accept(chunk.getMessage().getContent());
-                                fullReceived += chunk.getMessage().getContent();
+                                ChunkReceivedEventArgs args = new ChunkReceivedEventArgs(content, ChunkType.Content);
+                                chunkReceived.accept(args);
+                                fullReceived += content;
                             }
 
-                            if(chunk.getMessage().getToolCalls() != null && !chunk.getMessage().getToolCalls().isEmpty()) {
-                                toolCalls.addAll(chunk.getMessage().getToolCalls() );
+                            if(message.getThinking() != null) {
+                                ChunkReceivedEventArgs args = new ChunkReceivedEventArgs(message.getThinking(), ChunkType.Thinking);
+                               chunkReceived.accept(args);
                             }
-                            log.debug("Received chunk: " + line);
+
+                            if(message.getToolCalls() != null && !message.getToolCalls().isEmpty()) {
+                                toolCalls.addAll(message.getToolCalls() );
+                            }
                         }
                     }
+
+                    log.debug("Responded with \n tool_calls: " + toolCalls.size() + "\nmessage: " + fullReceived);
 
                     OllamaMessage message = new BotMessage(fullReceived);
                     historyManager.addMessageToHistory(chatId, message);
@@ -212,6 +233,10 @@ public class OllamaConnectorService {
                     }
 
                     String toolResult = toolhandlingManager.handleToolInvocation(functionCall);
+                    String toolCallData = String.format("{ \"tool_call\" : \"%s\" , \"raw_result\": \"%s\"}", functionCall.getName(), toolResult);
+                    ChunkReceivedEventArgs args = new ChunkReceivedEventArgs(toolCallData, ChunkType.ToolCall);
+                    chunkReceived.accept(args);
+
                     OllamaMessage toolMessage = new ToolMessage(toolCall.getFunctionCall().getName(), toolResult);
                     historyManager.addMessageToHistory(chatId, toolMessage);
                 }
@@ -222,6 +247,9 @@ public class OllamaConnectorService {
                 }
 
             }
+
+            ChunkReceivedEventArgs args = new ChunkReceivedEventArgs("", ChunkType.CompleteChunk);
+            chunkReceived.accept(args);
         }catch(Exception ex)
         {
             throw new RuntimeException("Failed to generate text stream", ex);

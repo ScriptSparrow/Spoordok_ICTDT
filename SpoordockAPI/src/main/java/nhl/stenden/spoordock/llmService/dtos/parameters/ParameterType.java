@@ -1,5 +1,7 @@
 package nhl.stenden.spoordock.llmService.dtos.parameters;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum ParameterType {
 
     STRING("string"),
@@ -13,9 +15,9 @@ public enum ParameterType {
         this.typeName = typeName;
     }
 
-    @Override
+    @JsonValue
     public String toString() {
-        return this.typeName;
+        return this.typeName.toLowerCase();
     }
 
 }
