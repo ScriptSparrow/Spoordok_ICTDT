@@ -14,10 +14,16 @@ import lombok.Setter;
 @Setter
 public class LlmConfiguration {
 
-    private List<String> models;
+    private List<ModelConfig> models;
     private String baseUrl;
     private String defaultModel;
     private SystemPrompts systemPrompts;
+
+    @Getter @Setter
+    public static class ModelConfig {
+        private String name;
+        private int contextLength;
+    }
 
     @Getter @Setter
     public static class SystemPrompts {

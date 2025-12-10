@@ -16,5 +16,5 @@ import lombok.Setter;
 public class FunctionCall {
     private String name;
     private String description;
-    private Map<String,Object> parameters;
+    private Map<String,Object> arguments;
 }

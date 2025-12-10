@@ -18,6 +18,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import io.swagger.v3.oas.annotations.Parameter;
 import nhl.stenden.spoordock.controllers.dtos.ai.ChatRequest;
 import nhl.stenden.spoordock.llmService.configuration.LlmConfiguration;
+import nhl.stenden.spoordock.llmService.ChunkReceivedEventArgs;
 import nhl.stenden.spoordock.llmService.OllamaConnectorService;
 
 @RestController
@@ -36,7 +37,7 @@ public class AiAgentController {
     public ResponseEntity<?> getAvailableModels() {
         return ResponseEntity.ok(
             Map.of(
-                "availableModels", llmConfiguration.getModels(),
+                "availableModels", llmConfiguration.getModels().stream().map(m -> m.getName()).toList(),
                 "defaultModel", llmConfiguration.getDefaultModel()
             )
         );
@@ -56,7 +57,7 @@ public class AiAgentController {
             ? llmConfiguration.getDefaultModel() 
             : model;
 
-        if (!llmConfiguration.getModels().contains(selectedModel)) {
+        if (!llmConfiguration.getModels().stream().anyMatch(m -> m.getName().equals(selectedModel))) {
             return ResponseEntity
                 .badRequest()
                 .body("Model '" + selectedModel + "' is not available. Available models: " + llmConfiguration.getModels());
@@ -69,7 +70,7 @@ public class AiAgentController {
                 .body("Message cannot be empty");
         }
 
-        final SseEmitter emitter = new SseEmitter();
+        final SseEmitter emitter = new SseEmitter(0L); // No timeout, LLMs aren't that fast 
         CompletableFuture.runAsync(() -> streamResponse(emitter, id, selectedModel, message));
         return ResponseEntity.ok(emitter);
     }
@@ -77,16 +78,16 @@ public class AiAgentController {
     
     private void streamResponse(SseEmitter emitter, UUID id, String model, String message) {
         try {
-            ollamaConnectorService.startChatWithToolsStream(id, message, model, text -> sendEvent(emitter, text));
+            ollamaConnectorService.startChatWithToolsStream(id, message, model, text -> sendChunkEvent(emitter, text));
             emitter.complete();
         } catch (Exception e) {
             emitter.completeWithError(e);
         }
     }
 
-    private void sendEvent(SseEmitter emitter, String text) {
+    private void sendChunkEvent(SseEmitter emitter, ChunkReceivedEventArgs args) {
         try {
-            emitter.send(SseEmitter.event().data(text));
+            emitter.send(SseEmitter.event().data(args.toString()));
         } catch (Exception e) {
             emitter.completeWithError(e);
         }

@@ -1,5 +1,7 @@
 package nhl.stenden.spoordock.llmService.historyManager.classes;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum Role {
 
     SYSTEM("system"),
@@ -12,7 +14,7 @@ public enum Role {
         this._role = string;
     }
 
-    @Override 
+    @JsonValue 
     public String toString() {
         return this._role;
     }
