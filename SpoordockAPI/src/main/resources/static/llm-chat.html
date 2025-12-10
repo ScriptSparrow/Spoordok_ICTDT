@@ -15,8 +15,40 @@
         }
 
         .bg-bot {
-            background-color: #6c757d;
+            background-color: transparent;
         }
+
+        .input-area {
+            position: absolute;
+            bottom: 2rem;
+            border-radius: 8px;
+            padding: 1em;
+            color: white;
+            background-color: #001d0c;
+            resize: none;
+            width: 100%;
+        }
+        
+        .thinking {
+            background-color: transparent;
+            margin: 1rem;
+            border-radius: 8px;
+            min-height: 2em;
+            max-height: 12em;
+            overflow-y: auto;
+        }
+
+        .message-bubble {
+            background-color: rgb(0, 80, 41);
+        }
+
+            .message-bubble.message-complete {
+               background-color: rgb(0, 92, 46);
+            }
+
+            .thinking {
+                background-color: rgb(0, 80, 41);
+            }
 
         .bg-user {
             background-color: #0d6efd;
@@ -32,30 +64,43 @@
 
     <script>
 
-        /// Appends a bot response message to the chat container and returns the message element for later updates
+        {
+            
+        }
+        const thinkingWrapper = document.createElement("div");
+        thinkingWrapper.innerHTML = ` <div class="p-3 thinking">
+                Sending request...
+            </div>`;
+        const thinkingTemplateElement = thinkingWrapper.firstElementChild;
+
+        const botWrapper = document.createElement("div");
+        botWrapper.innerHTML = `<div class="p-3 bg-bot text-white bot-message">
+                </div>`;
+        const botTemplateElement = botWrapper.firstElementChild;
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = `<div class="row mb-2">
+            <div class="col-10">
+                <div class="message-bubble rounded">
+                    
+                </div>
+            </div>
+            <div class="col-2"></div>
+        </div>`;
+        const botResponseElement = wrapper.firstElementChild;
+
+
+
         function appendBotResponse(initialText = "loading...") {
-            const wrapper = document.createElement("div");
-            wrapper.innerHTML = `<div class="row mb-2">
-                                    <div class="col-10">
-                                        <div class="p-3 bg-bot text-white rounded bot-message">
-                                            ${initialText}
-                                        </div>
-                                    </div>
-                                    <div class="col-2"></div>
-                                </div>`;
-            
-            const element = wrapper.firstElementChild;
-            document.getElementById("chat-container").appendChild(element);
-            
-            // Return the message div so you can update it later
-            return element.querySelector(".bot-message");
+            const node = botResponseElement.cloneNode(true);
+            return document.getElementById("chat-container").appendChild(node);
         }
 
         function toUserRow(prompt){
             return `<div class="row mb-2">
                         <div class="col-2"></div>
                         <div class="col-10">
-                            <div class="p-3 bg-user text-white rounded">
+                            <div class="p-3 rounded bg-user text-white">
                                 ${prompt}
                             </div>
                         </div>
@@ -69,8 +114,10 @@
 
         const id = crypto.randomUUID();
 
+        
         async function streamBotResponse(botMessageElement, prompt) {
 
+            const botChatCol = botMessageElement.querySelector(".message-bubble");
             const selectedModel = document.getElementById("modelSelect").value;
             const response = await fetch(`/api/ai/chat/${id}`, {
                 method: 'POST',
@@ -86,7 +133,9 @@
             const reader = response.body.getReader();
             const decoder = new TextDecoder("utf-8");
 
-            botMessageElement.textContent = ""; // Clear initial loading text
+            var thinkingElement = null;
+            var contentElement = null;
+            var tool_callElement = null;
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -97,11 +146,54 @@
                 // Parse SSE format: "data: ...\n\n"
                 const lines = chunk.split('\n');
                 for (const line of lines) {
+                    console.log('Received line:', line);
+
                     if (line.startsWith('data:')) {
                         const text = line.slice(5);
-                        console.log('Received:', text);
-                        // Append to your UI here
-                        botMessageElement.textContent += text;
+
+                        if(text.startsWith("thinking:")){
+
+                            const contentText = text.slice(9);
+                            if (contentText.trim().length === 0) {
+                                continue;
+                            }
+
+                            contentElement = null;
+                            tool_callElement = null;
+                            if (thinkingElement === null) {
+                                thinkingElement = botChatCol.appendChild(thinkingTemplateElement.cloneNode(true));
+                                thinkingElement.textContent = "";
+                            }
+                            
+                            thinkingElement.textContent += contentText;
+                        } else if (text.startsWith("tool_call:")) {
+                            const toolCallData = text.slice(10);
+                            jsonData = JSON.parse(toolCallData);
+
+                            thinkingElement = null;
+                            contentElement = null;
+                            
+
+                        } else if (text.startsWith("content:")){
+                            
+                            const contentText = text.slice(8);
+                            if (contentText.trim().length === 0) {
+                                continue;
+                            }
+
+                            thinkingElement = null;
+                            tool_callElement = null;
+
+                            if (contentElement === null) {
+                                contentElement = botChatCol.appendChild(botTemplateElement.cloneNode(true));
+                            }
+                            
+                            contentElement.textContent += contentText;
+
+                        } else if (text.startsWith("complete_chunk"))
+                        {
+                            botChatCol.classList.add("message-complete");
+                        }
                     }
                 }
             }
@@ -110,8 +202,48 @@
 
         }
 
+        async function loadModels() {
+            try {
+                const response = await fetch('/api/ai/models');
+                const data = await response.json();
+                
+                const modelSelect = document.getElementById("modelSelect");
+                modelSelect.innerHTML = ""; // Clear existing options
+                
+                data.availableModels.forEach(model => {
+                    const option = document.createElement("option");
+                    option.value = model;
+                    option.textContent = model;
+                    if (model === data.defaultModel) {
+                        option.selected = true;
+                    }
+                    modelSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Failed to load models:", error);
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
+            loadModels(); // Load models on page load
+
             const promptInput = document.getElementById("promptInput");
+
+            const autosize = (el) => {
+                const maxPx = parseFloat(getComputedStyle(el).maxHeight);
+                el.style.height = 'auto';
+                const newHeight = el.scrollHeight;
+                if (!isNaN(maxPx) && newHeight > maxPx) {
+                    el.style.height = maxPx + 'px';
+                    el.style.overflowY = 'auto';
+                } else {
+                    el.style.height = newHeight + 'px';
+                    el.style.overflowY = 'hidden';
+                }
+            };
+
+            autosize(promptInput);
+            promptInput.addEventListener('input', () => autosize(promptInput));
 
             promptInput.addEventListener("keydown", function(event) {
                 if (event.key === "Enter" && !event.shiftKey) {
@@ -147,7 +279,10 @@
 
 
     <div class="row">
-        <input type="text" id="promptInput" class="form-control" placeholder="Enter your prompt here..." />
+        <div class="col-12">
+             <textarea id="promptInput" class="input-area" placeholder="Enter your prompt here..."></textarea>
+        </div>
+       
     </div>
      <div class="row mb-3">
         <div class="col-3">
@@ -155,10 +290,7 @@
         </div>
         <div class="col-6">
             <select id="modelSelect" class="form-select">
-                <option value="llama3.2:3b" selected>llama3.2:3b - Meta's Llama 3.2 (3B) - Balanced speed and quality</option>
-                <option value="qwen2:1.5b">qwen2:1.5b - Alibaba's Qwen2 (1.5B) - Very fast and lightweight</option>
-                <option value="phi3:mini">phi3:mini - Microsoft's Phi-3 Mini (3.8B) - Great for coding and reasoning</option>
-                <option value="mistral:7b">mistral:7b - Mistral 7B - High performance for complex tasks</option>
+                <option value="">Loading models...</option>
             </select>
         </div>
     </div>
