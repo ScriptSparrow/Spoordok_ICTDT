@@ -1,3 +1,5 @@
+import { KENGETALLEN, calculateCosts } from './kengetallen.js';
+
 export class Toasts {
   constructor(container) {
     this.container = container;
@@ -56,6 +58,38 @@ export class InfoPanel {
   }
 }
 
+export class CostPanel {
+  constructor(contentEl) {
+    this.contentEl = contentEl;
+  }
+
+  clear() {
+    if (this.contentEl) {
+      this.contentEl.innerHTML = '<span class="muted">Selecteer een polygon...</span>';
+    }
+  }
+
+  showCosts(poly) {
+    if (!this.contentEl) return;
+    const kg = KENGETALLEN[poly.type];
+    const costs = calculateCosts(poly);
+    if (!kg || !costs) {
+      this.clear();
+      return;
+    }
+    this.contentEl.innerHTML = `
+      <div><span class="label">Type</span>: <span class="value">${kg.code}. ${escapeHtml(kg.label)}</span></div>
+      <div><span class="label">Oppervlakte</span>: <span class="value">${fmt(poly.areaM2)} m2</span></div>
+      <div><span class="label">Volume</span>: <span class="value">${fmt(poly.volumeM3)} m3</span></div>
+      <hr/>
+      <div><span class="label">Kosten</span>: <span class="value">${fmtCurrency(costs.kosten)}</span></div>
+      <div><span class="label">Opbrengst</span>: <span class="value">${fmtCurrency(costs.opbrengst)}</span></div>
+      <div><span class="label">Bewoners</span>: <span class="value">${costs.bewoners !== null ? fmt(costs.bewoners) : 'n.v.t.'}</span></div>
+      <div><span class="label">Punten</span>: <span class="value">${fmt(Math.round(costs.punten * 100) / 100)}</span></div>
+    `;
+  }
+}
+
 export function bindControls(handlers) {
   const $ = (id) => document.getElementById(id);
   const btnDraw = $('btn-draw');
@@ -75,7 +109,7 @@ export function bindControls(handlers) {
   btnUndo.addEventListener('click', handlers.onUndo);
   btnRedo.addEventListener('click', handlers.onRedo);
   btnResetCamera.addEventListener('click', handlers.onResetCamera);
-  btnSimulate.addEventListener('click', handlers.onSimulate);
+  if (btnSimulate) btnSimulate.addEventListener('click', handlers.onSimulate);
 
   selType.addEventListener('change', () => handlers.onTypeChange(selType.value));
 
@@ -102,6 +136,9 @@ export function bindControls(handlers) {
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 function fmt(n) { return (n ?? 0).toLocaleString('nl-NL'); }
+function fmtCurrency(n) {
+  return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+}
 function row(label, value) { return `<div><span class="label">${escapeHtml(label)}</span>: <span class="value">${escapeHtml(String(value))}</span></div>`; }
-function labelForType(t) { return ({ parks: 'Groen', water: 'Water', housing: 'Wonen', office: 'Kantoor', industry: 'Industrie' }[t]) || t; }
+function labelForType(t) { return KENGETALLEN[t]?.label || t; }
 function escapeHtml(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }

@@ -68,11 +68,14 @@
             <label class="field">
                 <span>Functie</span>
                 <select id="select-type">
-                    <option value="parks">Groen (Parks)</option>
-                    <option value="water">Water</option>
-                    <option value="housing" selected>Wonen</option>
-                    <option value="office">Kantoor</option>
-                    <option value="industry">Industrie</option>
+                    <option value="A">Vrijstaand huis</option>
+                    <option value="B" selected>Rijtjeswoning</option>
+                    <option value="C">Appartement</option>
+                    <option value="D">Bedrijfsgebouw</option>
+                    <option value="E">Park/groen</option>
+                    <option value="F">Wegen</option>
+                    <option value="G">Parkeerplaatsen</option>
+                    <option value="H">Parkeerplaatsen overdekt</option>
                 </select>
             </label>
             <label class="field">
@@ -81,15 +84,22 @@
                 <input id="height-input" type="number" min="0" max="500" step="1" value="10" />
             </label>
             <div class="legend">
-                <div><span class="swatch" style="background:#34d399"></span>Groen</div>
-                <div><span class="swatch" style="background:#60a5fa"></span>Water</div>
-                <div><span class="swatch" style="background:#fbbf24"></span>Wonen</div>
-                <div><span class="swatch" style="background:#9ca3af"></span>Industrie</div>
-                <div><span class="swatch" style="background:#a78bfa"></span>Kantoor</div>
+                <div><span class="swatch" style="background:#f97316"></span>Vrijstaand</div>
+                <div><span class="swatch" style="background:#fbbf24"></span>Rijtjes</div>
+                <div><span class="swatch" style="background:#eab308"></span>Appartement</div>
+                <div><span class="swatch" style="background:#9ca3af"></span>Bedrijf</div>
+                <div><span class="swatch" style="background:#34d399"></span>Park</div>
+                <div><span class="swatch" style="background:#64748b"></span>Wegen</div>
+                <div><span class="swatch" style="background:#6b7280"></span>Parkeren</div>
+                <div><span class="swatch" style="background:#a78bfa"></span>Overdekt</div>
             </div>
         </div>
         <div class="panel-section">
             <button id="btn-reset-camera" class="btn" data-tooltip="Reset camera naar Spoordok">Reset camera</button>
+        </div>
+        <div class="panel-section">
+            <h4>Kostenberekening</h4>
+            <div id="cost-output">Selecteer een polygon...</div>
         </div>
     </aside>
 

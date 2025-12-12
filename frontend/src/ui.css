@@ -69,3 +69,23 @@
 }
 #info-content .label { color: #9ca3af; }
 #info-content .value { color: #e6e6e6; font-weight: 500; }
+
+/* Cost panel styling */
+#cost-output {
+  font-size: 14px;
+  line-height: 1.6;
+}
+#cost-output .label { color: #9ca3af; }
+#cost-output .value { color: #e6e6e6; font-weight: 500; }
+#cost-output hr {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  margin: 8px 0;
+}
+
+/* Legend grid for 8 items */
+.legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 8px;
+}

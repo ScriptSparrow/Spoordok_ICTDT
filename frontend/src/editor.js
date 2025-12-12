@@ -1,13 +1,13 @@
 import { CallbackProperty, Cartographic, Cartesian2, Cartesian3, Color, Entity, HeightReference, LabelStyle, PolygonGraphics, PolylineGraphics, ScreenSpaceEventHandler, ScreenSpaceEventType, Viewer, defined, Math as CesiumMath, Matrix4, Transforms } from 'cesium';
+import { KENGETALLEN } from './kengetallen.js';
 
-// Kleurtoewijzing per functie/type
-const TYPE_COLORS = {
-  parks: Color.fromCssColorString('#34d399').withAlpha(0.6),
-  water: Color.fromCssColorString('#60a5fa').withAlpha(0.6),
-  housing: Color.fromCssColorString('#fbbf24').withAlpha(0.6),
-  industry: Color.fromCssColorString('#9ca3af').withAlpha(0.6),
-  office: Color.fromCssColorString('#a78bfa').withAlpha(0.6),
-};
+// Kleurtoewijzing per functie/type - gegenereerd uit KENGETALLEN
+const TYPE_COLORS = Object.fromEntries(
+  Object.entries(KENGETALLEN).map(([code, k]) => [
+    code,
+    Color.fromCssColorString(k.color).withAlpha(0.6)
+  ])
+);
 
 export class PolygonEditor {
   /**
@@ -19,7 +19,7 @@ export class PolygonEditor {
     this.callbacks = callbacks;
 
     this.mode = 'idle'; // 'draw' | 'edit' | 'idle'
-    this.currentType = 'housing';
+    this.currentType = 'B'; // Rijtjeswoning als standaard
     this.currentHeight = 10;
 
     this.handler = new ScreenSpaceEventHandler(this.viewer.canvas);

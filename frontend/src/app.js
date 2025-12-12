@@ -1,7 +1,7 @@
 import { setupViewer, flyToSpoordok, SPOORDOK_CENTER } from './viewer.js';
 import { PolygonEditor } from './editor.js';
 import { ApiClient } from './api.js';
-import { InfoPanel, Toasts, bindControls } from './ui.js';
+import { InfoPanel, Toasts, bindControls, CostPanel } from './ui.js';
 
 // Ingangspunt van de applicatie
 (async function main() {
@@ -11,6 +11,7 @@ import { InfoPanel, Toasts, bindControls } from './ui.js';
   const api = new ApiClient({ baseUrl: import.meta.env?.VITE_API_BASE || process.env.API_BASE_URL || '' });
   const toasts = new Toasts(document.getElementById('toast-container'));
   const infoPanel = new InfoPanel(document.getElementById('info-content'), document.getElementById('simulation-result'));
+  const costPanel = new CostPanel(document.getElementById('cost-output'));
 
   // Editorstatus
   const editor = new PolygonEditor(viewer, {
@@ -47,8 +48,9 @@ import { InfoPanel, Toasts, bindControls } from './ui.js';
       }
     },
     onSelectionChanged: async (poly) => {
-      if (!poly) { infoPanel.clear(); return; }
+      if (!poly) { infoPanel.clear(); costPanel.clear(); return; }
       infoPanel.showPolygon(poly);
+      costPanel.showCosts(poly);
       if (poly.scenarioId) {
         try {
           const data = await api.getScenarioScores(poly.scenarioId);
