@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.swagger.v3.oas.annotations.Parameter;
 import nhl.stenden.spoordock.controllers.dtos.ai.ChatRequest;
 import nhl.stenden.spoordock.llmService.configuration.LlmConfiguration;
@@ -27,6 +29,7 @@ public class AiAgentController {
 
     private final LlmConfiguration llmConfiguration;
     private final OllamaConnectorService ollamaConnectorService;
+    private final ObjectMapper  objectMapper = new ObjectMapper();
 
     public AiAgentController(LlmConfiguration llmConfiguration, OllamaConnectorService ollamaConnectorService) {
         this.llmConfiguration = llmConfiguration;
@@ -87,7 +90,7 @@ public class AiAgentController {
 
     private void sendChunkEvent(SseEmitter emitter, ChunkReceivedEventArgs args) {
         try {
-            emitter.send(SseEmitter.event().data(args.toString()));
+            emitter.send(SseEmitter.event().data(objectMapper.writeValueAsString(args)));
         } catch (Exception e) {
             emitter.completeWithError(e);
         }

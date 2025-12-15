@@ -1,31 +1,43 @@
+import { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
+
 const chatWindowTemplate = document.createElement('template');
 chatWindowTemplate.innerHTML = `
 
     <style 
     <style>
+
+        :host {
+            --chat-bg: #13171aff;
+            --chat-font-family: 'Trebuchet MS', sans-serif;
+            --chat-bubble-bg: #274C77;
+            --bot-response-bg: transparent;
+            --chat-bubble-text-color: white;
+            --input-bg: #001d0cff;
+        }
+
         .chat-window {
             height: 100%;
             width: 100%;
         }
 
         .chat-container {
-            border-radius: var(--chat-border-radius, 12px);
+            border-radius: 12px;
             height: 70%;
             width: 90%;
             overflow-y: auto;
-            background-color: var(--chat-bg, #13171aff);
+            background-color: var(--chat-bg);
             padding: 5%;
         }
         
         .chat-bubble {
-            border-radius: var(--chat-bubble-border-radius, 8px);
-            padding: var(--chat-bubble-padding, 1rem);
-            color: var(--chat-bubble-text-color, white);
-            font-family: 'Trebuchet MS', sans-serif;
+            border-radius: 8px;
+            padding: 1em;
+            color: var(--chat-bubble-text-color);
+            font-family: var(--chat-font-family);
         }
 
         .bot-chat {
-            
+            background-color: var(--bot-response-bg);
         }
 
         .bot-chat::after {
@@ -52,26 +64,44 @@ chatWindowTemplate.innerHTML = `
             margin-left: auto;
             max-width: 80%;
             align-self: flex-end;
-            background-color: var(--chat-bubble-bg, #274C77);
+            background-color: var(--chat-bubble-bg);
         }
 
         .chat-bubble .bot-thinking {
+            position: relative;
             font-size: 0.9rem;
             cursor: default;
             font-style: italic;
             opacity: 0.7;
-            overflow: hidden;
             max-height: none;
             transition: max-height 0.3s ease;
+            margin-top: 0.5rem;
             margin-bottom: 0.5rem;
             padding: 0.5rem;
             border: 1px solid var(--thinking-border-color, #4a90e2);
             border-radius: 8px;
+            background:transparent;
+            overflow-y: visible;
         }
-         
-            .chat-bubble.complete .bot-thinking.show {
+
+            .chat-bubble .bot-thinking .thinking-text {
+                overflow: hidden;
+            }
+
+            .chat-bubble.complete .bot-thinking .thinking-text {
+                max-height: 0.5em;
+            }
+
+            .chat-bubble.complete .bot-thinking .thinking-text.show {
                 max-height: none;
             }
+        
+        .chat-container .thinking-collapse-button {
+            z-index: 1000;
+            position: absolute;
+            top: -0.5em;
+            background-color: var(--chat-bg);
+        }
 
         .chat-row {
             display: flex;
@@ -104,8 +134,7 @@ chatWindowTemplate.innerHTML = `
             border: none;
             border-radius: 8px;
         }
-
-
+            
     </style>
 
     <div class="chat-window">
@@ -155,25 +184,10 @@ class ChatWindow extends HTMLElement {
 
         this.chatContainer = this.shadowRoot.getElementById('chat-container');
 
-        let mouseDownTarget = null;
-
-        this.chatContainer.addEventListener('mousedown', (event) => {
-            mouseDownTarget = event.target;
-        });
-
         this.modelSelection = this.shadowRoot.getElementById('modelSelect');
         this.fillModels();
 
-        this.chatContainer.addEventListener('click', (event) => {
-            // Only toggle if clicked and released on same element (no selection)
-            if (event.target.classList.contains('bot-thinking') && mouseDownTarget === event.target) {
-                const selection = window.getSelection().toString();
-                if (selection.length === 0) {
-                    event.target.classList.toggle('show');
-                }
-            }
-            mouseDownTarget = null;
-        });
+        
 
         this.textInput = this.shadowRoot.getElementById('promptInput');
         this.textInput.addEventListener('keydown', (event) => {
@@ -242,15 +256,23 @@ class ChatWindow extends HTMLElement {
 
                 const collapseButton = document.createElement('div');
                 collapseButton.classList.add('thinking-collapse-button');
-                collapseButton.innerHTML = '<i class="bi bi-arrows-collapse"></i> thinking...';
+                collapseButton.textContent = 'thinking... (click to expand/collapse)';
+                collapseButton.onclick = (target) => {
+                    const thinkingTextElement = target.currentTarget.closest('.bot-thinking').querySelector('.thinking-text');
+                    if (thinkingTextElement) {
+                        thinkingTextElement.classList.toggle('show');
+                    }
+                }
 
                 currentThinkingDiv = document.createElement('div');
+                currentThinkingDiv.classList.add('thinking-text');
+                currentThinkingDiv.classList.add('markdown-replace');
 
                 thinkingContainerDiv.appendChild(collapseButton);
                 thinkingContainerDiv.appendChild(currentThinkingDiv);
                 botMessageBubble.appendChild(thinkingContainerDiv);
             }
-            currentThinkingDiv.innerHTML += message;
+            currentThinkingDiv.innerText += message;
         }
 
         function onToolCallReceived(message){
@@ -264,10 +286,11 @@ class ChatWindow extends HTMLElement {
             if(!currentContentDiv){
                 currentContentDiv = document.createElement('div');
                 currentContentDiv.classList.add('bot-content');
+                currentContentDiv.classList.add('markdown-replace');
                 botMessageBubble.appendChild(currentContentDiv);
             }
 
-            currentContentDiv.textContent += message;
+            currentContentDiv.innerText += message;
         }
 
         const response = await fetch(`/api/ai/chat/${this.chatId}`, {
@@ -279,6 +302,39 @@ class ChatWindow extends HTMLElement {
                 message: prompt,
             })
         });
+
+        function handleEvent(event){
+            function escapeAndFormat(str) {
+                const escaped = str
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                return escaped.replace(/\n/g, '<br/>');
+            }
+
+            console.log('Raw line:', event);
+            if (event.startsWith('data:')) {
+                const data = event.replace('data:', '');
+                const json = JSON.parse(data);
+
+                const text = escapeAndFormat(json.chunk);
+                if(text.trim() === ''){
+                    return;
+                }
+
+                switch(json.chunkType){
+                    case 'thinking':
+                        onThinkingReceived(text);
+                        break;
+                    case 'tool_call':
+                        
+                        break;
+                    case 'content':
+                        onContentReceived(text);
+                        break;
+                }
+            }
+        }
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
@@ -293,24 +349,17 @@ class ChatWindow extends HTMLElement {
             // Split on double newline (event separator)
             const events = buffer.split('\n\n');
             buffer = events.pop(); // Keep incomplete event in buffer for next read
-
             for (const rawLine of events) {
-                console.log('Raw line:', rawLine);
-                const line = rawLine.replace("\n", "<br/>")
-                if (line.startsWith('data:')) {
-                    const data = line.replace('data:', '');
-                    if(data.startsWith('thinking:')){
-                        const thinkingMessage = data.replace('thinking:', '');
-                        if (thinkingMessage.trim() === '') { continue; }
-                        onThinkingReceived(thinkingMessage);
-                    } else if (data.startsWith("content:")) {
-                        const contentMessage = data.replace('content:', '');
-                        if (contentMessage.trim() === '') { continue; }
-                        onContentReceived(contentMessage);
-                    }
-                }
+                handleEvent(rawLine);
             }
         }
+
+        botMessageBubble.querySelectorAll('.markdown-replace').forEach(elem => {
+            const mdText = elem.innerText;
+            elem.innerText = '';
+            const html = marked.parse(mdText);
+            elem.innerHTML = html;
+        });
 
         botMessageBubble.classList.add('complete');
     }
