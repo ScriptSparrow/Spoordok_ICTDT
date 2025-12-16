@@ -44,7 +44,7 @@ public class OllamaConnectorService {
 
     private static final String EMBEDDING_MODEL_NAME = "nomic-embed-text";
     
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private final HttpClient httpClient;
     private final URI baseUrl;
     private final Map<String, LlmConfiguration.ModelConfig> modelConfigs = new HashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -58,12 +58,13 @@ public class OllamaConnectorService {
      * @param configuration  the LLM configuration containing the base URL and system prompts
      * @param historyManager the chat history manager for storing conversation history
      */
-    public OllamaConnectorService(LlmConfiguration configuration, IChatHistoryManager historyManager, ToolHandlingManager toolHandlingManager) {
+    public OllamaConnectorService(LlmConfiguration configuration, IChatHistoryManager historyManager, ToolHandlingManager toolHandlingManager, HttpClient httpClient) {
         String apiUrl = configuration.getBaseUrl();
         this.baseUrl = URI.create(apiUrl).normalize();
         this.historyManager = historyManager;
         this.systemPrompts = configuration.getSystemPrompts();
         this.toolhandlingManager = toolHandlingManager;
+        this.httpClient = httpClient;
 
         for (LlmConfiguration.ModelConfig modelConfig : configuration.getModels()) {
             modelConfigs.put(modelConfig.getName(), modelConfig);

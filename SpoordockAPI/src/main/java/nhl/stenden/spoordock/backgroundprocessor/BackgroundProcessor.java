@@ -11,11 +11,19 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class BackgroundProcessor {
 
-    private final ExecutorService executorService = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor();
+    private final ExecutorService executorService;
 
     private AtomicInteger scheduledTasks = new AtomicInteger(0);
     private AtomicInteger completedTasks = new AtomicInteger(0);
     private AtomicInteger failedTasks = new AtomicInteger(0);
+
+    public BackgroundProcessor() {
+        this.executorService = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor();
+    }
+
+    public BackgroundProcessor(ExecutorService executorService) {
+        this.executorService = executorService;
+    }
 
     public void submitTask(Runnable task) {
         var wrappedTask = new WrapperTask(this, task);
