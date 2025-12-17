@@ -1,6 +1,6 @@
 package nhl.stenden.spoordock.llmService;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import nhl.stenden.spoordock.llmService.ToolHandling.ToolHandlingManager;
 import nhl.stenden.spoordock.llmService.configuration.LlmConfiguration;
@@ -86,7 +87,7 @@ public class OllamaConnectorServiceTest {
     private OllamaConnectorService testingService; 
 
     @BeforeEach
-    void beforeAll() throws Exception {
+    void beforeEach() throws Exception {
         MockitoAnnotations.openMocks(this);
         
         when(historyManager.getHistory(any(UUID.class), anyInt()))
@@ -126,4 +127,14 @@ public class OllamaConnectorServiceTest {
 
         testingService.startChatWithToolsStream(id, "some prompt", defaultModel, chunkConsumer);
     }
+
+    @Test
+    void WhenMessageReturnedNull_NothingIsProcessed() {
+
+
+
+        
+    }
+
+    
 }

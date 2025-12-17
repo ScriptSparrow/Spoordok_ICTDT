@@ -15,7 +15,7 @@ import nhl.stenden.spoordock.llmService.historyManager.classes.OllamaMessage;
 @Repository
 public class InMemoryChatHistoryManager implements IChatHistoryManager {
 
-    public Map<UUID, Queue<OllamaMessage>> conversationHistories = new HashMap<UUID, Queue<OllamaMessage>>();
+    private Map<UUID, Queue<OllamaMessage>> conversationHistories = new HashMap<UUID, Queue<OllamaMessage>>();
 
     @Override
     public void createHistoryIfNotExists(UUID conversationId, OllamaMessage systemMessage) {

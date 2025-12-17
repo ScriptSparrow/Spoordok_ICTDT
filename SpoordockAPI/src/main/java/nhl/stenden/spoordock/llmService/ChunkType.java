@@ -20,6 +20,4 @@ public enum ChunkType {
         public String toString() {
             return chunkType;
         }
-        
-
 }
