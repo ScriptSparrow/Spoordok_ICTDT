@@ -26,7 +26,6 @@ public class SpoordockApplication {
 	public IChatHistoryManager chatHistoryManager(InMemoryChatHistoryManager inMemoryChatHistoryManager){
 
 		//Here we can switch implementations if needed in the future
-
 		return inMemoryChatHistoryManager;
 	}
 
