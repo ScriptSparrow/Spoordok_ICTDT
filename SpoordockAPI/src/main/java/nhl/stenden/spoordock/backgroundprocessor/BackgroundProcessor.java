@@ -31,16 +31,6 @@ public class BackgroundProcessor {
         scheduledTasks.incrementAndGet();
     }
 
-    public boolean isShutdown()
-    {
-        return executorService.isShutdown();
-    }
-
-    public void shutdown()
-    {
-        executorService.shutdown();
-    }
-
     private void markTaskComplete(boolean success){
         scheduledTasks.decrementAndGet();
         if (success) {
@@ -48,6 +38,16 @@ public class BackgroundProcessor {
         } else {
             failedTasks.incrementAndGet();
         }
+    }
+
+    public int getScheduledTaskCount() {
+        return scheduledTasks.get();
+    }
+    public int getCompletedTaskCount() {
+        return completedTasks.get();
+    }
+    public int getFailedTaskCount() {
+        return failedTasks.get();
     }
 
     private class WrapperTask implements Runnable
