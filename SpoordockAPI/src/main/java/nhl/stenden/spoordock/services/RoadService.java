@@ -1,15 +1,14 @@
 package nhl.stenden.spoordock.services;
 
-import nhl.stenden.spoordock.controllers.dtos.RoadDTO;
+import nhl.stenden.spoordock.controllers.dtos.RoadSegementDTO;
+import nhl.stenden.spoordock.controllers.dtos.RoadTypeDTO;
 import nhl.stenden.spoordock.database.RoadSegmentRepository;
 import nhl.stenden.spoordock.database.RoadTypeRepository;
-import nhl.stenden.spoordock.database.entities.RoadSegment;
-import nhl.stenden.spoordock.services.mappers.Mapper;
-import nhl.stenden.spoordock.services.mappers.RoadMapper;
+import nhl.stenden.spoordock.services.mappers.RoadSegmentMapper;
+import nhl.stenden.spoordock.services.mappers.RoadTypeMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -26,10 +25,14 @@ public class RoadService {
         this.roadSegmentRepository = roadSegmentRepository;
     }
 
-    public List<RoadDTO> getRoadDTOs () {
-        var segments = roadSegmentRepository.findAll();
-        return new RoadMapper().toDTOs(segments);
+    public List<RoadSegementDTO> getRoadDTOs () {
+        var roadSegments = roadSegmentRepository.findAll();
+        return new RoadSegmentMapper().toDTOs(roadSegments);
     }
 
 
+    public List<RoadTypeDTO> getRoadTypeDTOs() {
+        var roadTypes = roadTypeRepository.findAll();
+        return new RoadTypeMapper().toDTOs(roadTypes);
+    }
 }
