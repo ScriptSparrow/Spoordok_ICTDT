@@ -31,4 +31,15 @@ public class RoadTypeTemplate {
 
     private String texture;
 
+
+    public RoadTypeTemplate() {}
+
+    public RoadTypeTemplate(UUID id, List<RoadTypeTemplate> roadTemplates, int standardWidth, String users, String texture) {
+        this.id = id;
+        this.roadTemplates = roadTemplates;
+        this.standardWidth = standardWidth;
+        this.users = users;
+        this.texture = texture;
+    }
+
 }
