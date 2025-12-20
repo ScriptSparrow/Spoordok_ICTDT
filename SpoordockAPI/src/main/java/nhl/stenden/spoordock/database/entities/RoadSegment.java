@@ -1,14 +1,15 @@
 package nhl.stenden.spoordock.database.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.locationtech.jts.geom.LineString;
 
 import java.util.UUID;
 
 @Entity
+@Table(name = "wegsegmenten")
 @Getter
 @Setter
 public class RoadSegment {
@@ -18,15 +19,20 @@ public class RoadSegment {
     @Setter(AccessLevel.PRIVATE)
     private UUID id;     // ook een UUID?
 
-//    private String roadName; // ala straatnaam?
-
-    private String roadType; // mogelijk een enum? (Fietspad, Busbaan, Autoweg)
-
     private String roadDescription; // is deze nodig?
 
-    public RoadSegment(UUID id, String roadType, String roadDescription) {
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "wegtype")
+    private RoadTypeTemplate roadTypeTemplate;
+
+    @Column(name = "points")
+    private LineString roadPoints;
+
+    public RoadSegment() {}
+
+    public RoadSegment(UUID id, RoadTypeTemplate roadTypeTemplate, String roadDescription) {
         this.id = id;
-        this.roadType = roadType;
+        this.roadTypeTemplate = roadTypeTemplate;
         this.roadDescription = roadDescription;
     }
 }
