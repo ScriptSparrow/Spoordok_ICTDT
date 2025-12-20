@@ -13,7 +13,6 @@ public class RoadTypeMapper implements Mapper<RoadTypeDTO, RoadTypeTemplate>{
     public RoadTypeDTO toDTO(RoadTypeTemplate roadType) {
         return new RoadTypeDTO(
                 roadType.getId(),
-                roadType.getRoadTemplates(),
                 roadType.getStandardWidth(),
                 roadType.getUsers(),
                 roadType.getTexture()
@@ -24,7 +23,6 @@ public class RoadTypeMapper implements Mapper<RoadTypeDTO, RoadTypeTemplate>{
     public RoadTypeTemplate toEntity(RoadTypeDTO roadTypeDTO) {
         return new RoadTypeTemplate(
                 roadTypeDTO.getId(),
-                roadTypeDTO.getRoadTypeTemplates(),
                 roadTypeDTO.getStandardWidth(),
                 roadTypeDTO.getUsers(),
                 roadTypeDTO.getTexture()

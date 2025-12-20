@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
+@Table(name = "wegtypes")
 @Getter
 @Setter
 public class RoadTypeTemplate {
@@ -20,9 +21,6 @@ public class RoadTypeTemplate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private UUID id;
 
-    @OneToMany(mappedBy = "roadSegment")
-    private List<RoadTypeTemplate> roadTemplates;
-
     @Column(name = "standaard_breedte")
     private int standardWidth;
 
@@ -31,12 +29,10 @@ public class RoadTypeTemplate {
 
     private String texture;
 
-
     public RoadTypeTemplate() {}
 
-    public RoadTypeTemplate(UUID id, List<RoadTypeTemplate> roadTemplates, int standardWidth, String users, String texture) {
+    public RoadTypeTemplate(UUID id, int standardWidth, String users, String texture) {
         this.id = id;
-        this.roadTemplates = roadTemplates;
         this.standardWidth = standardWidth;
         this.users = users;
         this.texture = texture;
