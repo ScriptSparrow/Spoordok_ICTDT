@@ -1,26 +1,38 @@
 package nhl.stenden.spoordock.services.mappers;
 
 import nhl.stenden.spoordock.controllers.dtos.RoadSegementDTO;
+import nhl.stenden.spoordock.controllers.dtos.RoadTypeDTO;
+import nhl.stenden.spoordock.controllers.dtos.common.Coordinate;
 import nhl.stenden.spoordock.database.entities.RoadSegment;
+import nhl.stenden.spoordock.database.entities.RoadTypeTemplate;
+import org.locationtech.jts.geom.LineString;
 
 import java.util.List;
 
 public class RoadSegmentMapper implements Mapper<RoadSegementDTO, RoadSegment>{
 
-    @Override
+    private final RoadTypeMapper roadTypeMapper = new RoadTypeMapper();
+
+       @Override
     public RoadSegementDTO toDTO(RoadSegment roadSegment) {
+
+        RoadTypeDTO roadTypeDTO = roadTypeMapper.toDTO(roadSegment.getRoadTypeTemplate());
+
         return new RoadSegementDTO(
                 roadSegment.getId(),
-                roadSegment.getRoadType(),
+                roadTypeDTO,
                 roadSegment.getRoadDescription()
         );
     }
 
     @Override
     public RoadSegment toEntity(RoadSegementDTO roadDTO) {
-        return new RoadSegment(
+
+           RoadTypeTemplate roadTypeTemplate = roadTypeMapper.toEntity(roadDTO.getRoadType());
+
+           return new RoadSegment(
                 roadDTO.getId(),
-                roadDTO.getRoadType(),
+                roadTypeTemplate,
                 roadDTO.getRoadDescription()
         );
     }
@@ -36,5 +48,12 @@ public class RoadSegmentMapper implements Mapper<RoadSegementDTO, RoadSegment>{
         return roadDTOS.stream().map(this::toEntity).toList();
     }
 
+    private List<Coordinate> mapLineString(LineString lineString) {
+
+    }
+
+    private LineString mapCoordinates(List<Coordinate> coordinates) {
+
+    }
 
 }
