@@ -21,7 +21,7 @@ public class BuildingService {
     
     private final BuildingPolygonRepository buildingPolygonRepository;
     private final BuildingTypeRepository buildingTypeRepository;
-    private final BuildingPolygonMapper buildingPolygonMapper = new BuildingPolygonMapper();
+    private final BuildingPolygonMapper buildingPolygonMapper;
     private final BackgroundProcessor backgroundProcessor;
     private final OllamaConnectorService ollamaConnectorService;
     private final BuildingPolygonEmbeddingRepository buildingPolygonEmbeddingRepository;
@@ -30,12 +30,14 @@ public class BuildingService {
                 BuildingTypeRepository buildingTypeRepository, 
                 BackgroundProcessor backgroundProcessor,
                 OllamaConnectorService ollamaConnectorService,
-                BuildingPolygonEmbeddingRepository buildingPolygonEmbeddingRepository) {
+                BuildingPolygonEmbeddingRepository buildingPolygonEmbeddingRepository,
+                BuildingPolygonMapper buildingPolygonMapper) {
         this.buildingPolygonRepository = buildingPolygonRepository;
         this.buildingTypeRepository = buildingTypeRepository;
         this.backgroundProcessor = backgroundProcessor;
         this.ollamaConnectorService = ollamaConnectorService;
         this.buildingPolygonEmbeddingRepository = buildingPolygonEmbeddingRepository;
+        this.buildingPolygonMapper = buildingPolygonMapper;
     }
 
     public List<BuildingPolygonDTO> getBuildingPolygons(boolean embedTypes){
