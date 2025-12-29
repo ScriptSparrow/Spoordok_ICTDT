@@ -19,6 +19,7 @@ services:
       - ./src:/workspace/src
       - ./pom.xml:/workspace/pom.xml
       - ./target/classes:/workspace/target/classes
+      - ./.mvn/.cache:/root/.m2
     ports:
       - "6001:6001"
       - "5005:5005"  # JDWP debug port
@@ -26,5 +27,5 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:6001/health" ]
       interval: 3s
       timeout: 2s
-      start_period: 5s
+      start_period: 30s
       retries: 5

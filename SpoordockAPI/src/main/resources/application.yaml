@@ -15,3 +15,56 @@ springdoc:
 
   api-docs:
     enabled: true
+
+logging:
+  level:
+    root: INFO
+    nhl.stenden.spoordock: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+
+llm:
+  baseUrl: ${LLM_URL}
+  defaultModel: "qwen3:8b"
+  models: 
+    # llama3.2:3b - Meta's Llama 3.2 (3B params). Good balance of speed and quality.
+    # Strong at general conversation, reasoning, and following instructions.
+    - name: "llama3.2:3b"
+      contextLength: 8192
+    # qwen3:8b - Qwen 3 (8B params) by Qwen AI. Larger model with strong capabilities.
+    # Excels at complex reasoning, coding tasks, and detailed responses.
+    # Good at tool calling and multi-turn dialogues.
+    - name: "qwen3:8b"
+      contextLength: 40960
+
+    # granite3.2:8b - Granite 3.2 (8B params) by Inflection AI.
+    # Focused on helpfulness, safety, and alignment.
+    # Great for applications needing friendly and informative interactions.
+    - name: granite3.2:8b
+      contextLength: 8192
+
+  systemPrompts:
+    descriptionHelperPrompt: >
+      You are an expert in generating concise and informative descriptions based on provided data. 
+      The descriptions are needed for a project that is focused on infrastructure and urban planning.
+      Your task is to create clear, engaging, and accurate descriptions that effectively communicate the key features and benefits of the subject matter.
+      If the user asks anything else that is out of your scope, please make sure to let the user know. You should not answer any other questions outside of generating or helping with generating descriptions.
+    defaultChatPrompt: >
+      You are a helpful and knowledgeable assistant specialized in infrastructure and urban planning.
+      Your role is to assist users by providing accurate information, answering questions, and offering insights related to these fields.
+      If the user asks anything else that is out of your scope, please make sure to let the user know.
+
+      ASSUMPTIONS: 
+        The user is interactively talking to you. 
+        Do not make assumptions that you can easily checks with the user or with tools.
+      
+      TOOLS: 
+        You have access to tools. 
+        You do not need to use them for every question.
+        However, only use or reference them when you really need to. 
+        If you do use them, make sure to explain what you are doing and why.
+    temp: >
+      You are a helpful and knowledgeable assistant specialized in infrastructure and urban planning.
+      Your role is to assist users by providing accurate information, answering questions, and offering insights related to these fields.
+      If the user asks anything else that is out of your scope, please make sure to let the user know. 
+      You should not answer any other questions outside of infrastructure and urban planning

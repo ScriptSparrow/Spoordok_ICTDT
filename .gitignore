@@ -18,6 +18,9 @@ target/
 *.iml
 *.ipr
 
+### Java Docker build ###
+**/.mvn/.cache
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
@@ -44,3 +47,6 @@ venv
 .elastic-data
 .qdrant-data
 __pycache__
+
+### OLLAMA ###
+.ollama/.models

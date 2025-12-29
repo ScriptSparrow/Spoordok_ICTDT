@@ -1,0 +1,78 @@
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Spoordock Twin</title>
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+        <style>
+            body{
+                height: 100vh;
+                background-color: darkslategray;
+                color: white;
+            }
+
+            .chat-button {
+                z-index: 1001;
+                position: fixed;
+                bottom: 6vh;
+                right: 6vh;
+                padding: 1em;
+                border-radius: 50%;
+                background-color: teal;
+                transition: height 0.5s ease, width 0.5s ease;
+            }
+
+            .chat-window-wrapper {
+                position: fixed;
+                height: 0;
+                width: 0;
+                bottom: 8vh;
+                right: 8vh;
+                margin: 1rem;
+                overflow: hidden;
+            }
+
+            .chat-window-wrapper.show {
+                height: 70vh;
+                width: 40vw;
+                padding: 0;
+                margin: 0;
+                transition: height 0.5s ease, width 0.5s ease;
+            }
+
+            .chat-window-wrapper.hide {
+                height: 0;
+                width: 0;
+                padding: 0;
+                margin: 0;
+                transition: height 0.5s ease, width 0.5s ease;
+            }
+
+
+        </style>
+
+        <script>
+            function toggleChatWindow() {
+                const chatWindowWrapper = document.querySelector('.chat-window-wrapper');
+                chatWindowWrapper.classList.toggle('show');
+                chatWindowWrapper.classList.toggle('hide');
+            }
+        </script>
+
+        <script type="module" src="components/chat-window.js"></script>
+    </head>
+<body>
+
+    <div class="chat-button" onclick="toggleChatWindow()">
+        <i class="bi bi-chat-dots-fill" style="font-size: 2em; color: white;"></i>
+    </div>
+
+    <div class="chat-window-wrapper show">
+        <chat-window></chat-window>
+    </div>
+
+</body>
+
+</html>

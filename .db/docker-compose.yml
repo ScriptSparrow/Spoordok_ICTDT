@@ -1,7 +1,9 @@
 services:
   db:
     platform: linux/x86_64
-    image: postgis/postgis:15-3.5
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: postgres_db
     environment:
       POSTGRES_USER: ${DB_USERNAME:-myuser}
