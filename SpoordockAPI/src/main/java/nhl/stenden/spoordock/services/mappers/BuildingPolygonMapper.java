@@ -1,20 +1,22 @@
 package nhl.stenden.spoordock.services.mappers;
 
-import java.util.Arrays;
 import java.util.List;
 
-import org.locationtech.jts.geom.Polygon;
-import nhl.stenden.spoordock.controllers.dtos.BuildingPolygonDTO;
-import nhl.stenden.spoordock.controllers.dtos.polygon.PolygonDTO;
-import nhl.stenden.spoordock.controllers.dtos.polygon.PolygonCoordinateDTO;
-import nhl.stenden.spoordock.database.entities.BuildingPolygonEntity;
+import org.springframework.stereotype.Component;
 
+import nhl.stenden.spoordock.controllers.dtos.BuildingPolygonDTO;
+import nhl.stenden.spoordock.database.entities.BuildingPolygonEntity;
+import nhl.stenden.spoordock.services.mappers.geometry.PolygonMapper;
+
+@Component
 public class BuildingPolygonMapper implements Mapper<BuildingPolygonDTO, BuildingPolygonEntity> {
 
     private final BuildingTypeMapper buildingTypeMapper;
+    private final PolygonMapper polygonMapper;
 
-    public BuildingPolygonMapper() {
-        this.buildingTypeMapper = new BuildingTypeMapper();
+    public BuildingPolygonMapper(BuildingTypeMapper buildingTypeMapper, PolygonMapper polygonMapper) {
+        this.buildingTypeMapper = buildingTypeMapper;
+        this.polygonMapper = polygonMapper;
     }
 
     @Override
@@ -24,7 +26,7 @@ public class BuildingPolygonMapper implements Mapper<BuildingPolygonDTO, Buildin
             entity.getName(),
             entity.getDescription(),
             entity.getBuildingType() != null ? buildingTypeMapper.toDTO(entity.getBuildingType()) : null,
-            mapPolygon(entity.getPolygon()),
+            polygonMapper.toDTO(entity.getPolygon()),
             entity.getHeight()
         );
     }
@@ -37,7 +39,7 @@ public class BuildingPolygonMapper implements Mapper<BuildingPolygonDTO, Buildin
             dto.getName(), 
             dto.getDescription(),
             dto.getBuildingType() != null ? buildingTypeMapper.toEntity(dto.getBuildingType()) : null,
-            mapPolygon(dto.getPolygon()),
+            polygonMapper.toEntity(dto.getPolygon()),
             dto.getHeight()
         );
     }
@@ -50,32 +52,5 @@ public class BuildingPolygonMapper implements Mapper<BuildingPolygonDTO, Buildin
     @Override
     public List<BuildingPolygonEntity> toEntities(List<BuildingPolygonDTO> dtos) {
         return dtos.stream().map(this::toEntity).toList();
-    }
-
-    private PolygonDTO mapPolygon(Polygon polygon) {
-
-        var coordinates = Arrays.stream(polygon.getCoordinates())
-            .map(coord -> {
-                var dto = new PolygonCoordinateDTO();
-                dto.setX(coord.getX());
-                dto.setY(coord.getY());
-                dto.setZ(coord.getZ());
-                return dto;
-            })
-            .toList();
-
-        var polygonDTO = new PolygonDTO();
-        polygonDTO.setCoordinates(coordinates);
-        return polygonDTO;
-    }
-
-    private Polygon mapPolygon(PolygonDTO polygonDTO) {
-        
-        var coordinates = polygonDTO.getCoordinates().stream()
-            .map(dto -> new org.locationtech.jts.geom.Coordinate(dto.getX(), dto.getY(), dto.getZ()))
-            .toArray(org.locationtech.jts.geom.Coordinate[]::new);
-
-        var geometryFactory = new org.locationtech.jts.geom.GeometryFactory();
-        return geometryFactory.createPolygon(coordinates);
     }
 }

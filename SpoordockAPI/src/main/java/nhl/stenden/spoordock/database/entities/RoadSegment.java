@@ -30,9 +30,10 @@ public class RoadSegment {
 
     public RoadSegment() {}
 
-    public RoadSegment(UUID id, RoadTypeTemplate roadTypeTemplate, String roadDescription) {
+    public RoadSegment(UUID id, RoadTypeTemplate roadTypeTemplate, String roadDescription, LineString roadPoints) {
         this.id = id;
         this.roadTypeTemplate = roadTypeTemplate;
         this.roadDescription = roadDescription;
+        this.roadPoints = roadPoints;
     }
 }

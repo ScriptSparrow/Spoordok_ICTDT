@@ -1,11 +1,8 @@
 package nhl.stenden.spoordock.controllers.dtos;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import nhl.stenden.spoordock.database.entities.RoadTypeTemplate;
 
-import java.util.List;
 import java.util.UUID;
 
 @Getter

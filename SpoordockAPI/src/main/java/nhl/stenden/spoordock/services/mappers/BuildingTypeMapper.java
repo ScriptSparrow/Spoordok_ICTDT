@@ -1,11 +1,13 @@
 package nhl.stenden.spoordock.services.mappers;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import org.springframework.stereotype.Component;
 
 import nhl.stenden.spoordock.controllers.dtos.BuildingTypeDTO;
 import nhl.stenden.spoordock.database.entities.BuildingTypeEntity;
 
+@Component
 public class BuildingTypeMapper implements Mapper<BuildingTypeDTO, BuildingTypeEntity> {
 
     @Override
