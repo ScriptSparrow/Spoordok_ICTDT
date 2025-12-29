@@ -42,7 +42,7 @@ public class BackgroundProcessorTests {
             });
 
         var backgroundProcessor = new BackgroundProcessor(mocked);
-        backgroundProcessor.submitTask(() -> { int i = 0; });
+        backgroundProcessor.submitTask(() -> { System.out.println("Ran this task"); });
 
         assertTrue(used.get());
     }
@@ -73,12 +73,14 @@ public class BackgroundProcessorTests {
         AtomicBoolean ran = new AtomicBoolean(false);
         for (int i = 0; i < tasksToSubmit; i++) {
             backgroundProcessor.submitTask(() -> {
+                ran.set(true);
                 throw new RuntimeException("Test exception");
             });
         }
 
         Thread.sleep(100); // Wait for tasks to complete
 
+        assertTrue(ran.get());
         assertEquals(0, backgroundProcessor.getScheduledTaskCount());
         assertEquals(0, backgroundProcessor.getCompletedTaskCount());
         assertEquals(5, backgroundProcessor.getFailedTaskCount());

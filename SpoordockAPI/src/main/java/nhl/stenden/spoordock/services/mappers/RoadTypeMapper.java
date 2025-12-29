@@ -1,12 +1,13 @@
 package nhl.stenden.spoordock.services.mappers;
 
-import nhl.stenden.spoordock.controllers.dtos.RoadSegementDTO;
 import nhl.stenden.spoordock.controllers.dtos.RoadTypeDTO;
-import nhl.stenden.spoordock.database.entities.RoadSegment;
 import nhl.stenden.spoordock.database.entities.RoadTypeTemplate;
 
 import java.util.List;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class RoadTypeMapper implements Mapper<RoadTypeDTO, RoadTypeTemplate>{
 
     @Override

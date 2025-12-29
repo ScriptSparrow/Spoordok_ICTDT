@@ -5,36 +5,44 @@ import nhl.stenden.spoordock.controllers.dtos.RoadTypeDTO;
 import nhl.stenden.spoordock.controllers.dtos.common.Coordinate;
 import nhl.stenden.spoordock.database.entities.RoadSegment;
 import nhl.stenden.spoordock.database.entities.RoadTypeTemplate;
-import org.locationtech.jts.geom.LineString;
+import nhl.stenden.spoordock.services.mappers.geometry.LineStringMapper;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-public class RoadSegmentMapper implements Mapper<RoadSegementDTO, RoadSegment>{
+@Component
+public class RoadSegmentMapper implements Mapper<RoadSegementDTO, RoadSegment> {
 
-    private final RoadTypeMapper roadTypeMapper = new RoadTypeMapper();
+    private final RoadTypeMapper roadTypeMapper;
+    private final LineStringMapper lineStringMapper;
 
-       @Override
+    public RoadSegmentMapper(RoadTypeMapper roadTypeMapper, LineStringMapper lineStringMapper) {
+        this.roadTypeMapper = roadTypeMapper;
+        this.lineStringMapper = lineStringMapper;
+    }
+
+    @Override
     public RoadSegementDTO toDTO(RoadSegment roadSegment) {
 
         RoadTypeDTO roadTypeDTO = roadTypeMapper.toDTO(roadSegment.getRoadTypeTemplate());
-
+        List<Coordinate> coordinates = lineStringMapper.toDTO(roadSegment.getRoadPoints());
         return new RoadSegementDTO(
                 roadSegment.getId(),
                 roadTypeDTO,
-                roadSegment.getRoadDescription()
-        );
+                roadSegment.getRoadDescription(),
+                coordinates);
     }
 
     @Override
     public RoadSegment toEntity(RoadSegementDTO roadDTO) {
 
-           RoadTypeTemplate roadTypeTemplate = roadTypeMapper.toEntity(roadDTO.getRoadType());
-
-           return new RoadSegment(
+        RoadTypeTemplate roadTypeTemplate = roadTypeMapper.toEntity(roadDTO.getRoadType());
+        org.locationtech.jts.geom.LineString roadPoints = lineStringMapper.toEntity(roadDTO.getCoordinates());
+        return new RoadSegment(
                 roadDTO.getId(),
                 roadTypeTemplate,
-                roadDTO.getRoadDescription()
-        );
+                roadDTO.getRoadDescription(),
+                roadPoints);
     }
 
     // simplified foreach loop, place every in a new list
@@ -47,13 +55,4 @@ public class RoadSegmentMapper implements Mapper<RoadSegementDTO, RoadSegment>{
     public List<RoadSegment> toEntities(List<RoadSegementDTO> roadDTOS) {
         return roadDTOS.stream().map(this::toEntity).toList();
     }
-
-    private List<Coordinate> mapLineString(LineString lineString) {
-
-    }
-
-    private LineString mapCoordinates(List<Coordinate> coordinates) {
-
-    }
-
 }
