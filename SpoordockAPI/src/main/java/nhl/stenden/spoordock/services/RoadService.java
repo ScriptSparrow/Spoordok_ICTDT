@@ -6,7 +6,6 @@ import nhl.stenden.spoordock.database.RoadSegmentRepository;
 import nhl.stenden.spoordock.database.RoadTypeRepository;
 import nhl.stenden.spoordock.services.mappers.RoadSegmentMapper;
 import nhl.stenden.spoordock.services.mappers.RoadTypeMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -17,19 +16,19 @@ public class RoadService {
 
     private final RoadTypeRepository roadTypeRepository;
     private final RoadSegmentRepository roadSegmentRepository;
+    private final RoadSegmentMapper roadSegmentMapper;
 
-    @Autowired
-    public RoadService(RoadTypeRepository roadTypeRepository, RoadSegmentRepository roadSegmentRepository)
+    public RoadService(RoadTypeRepository roadTypeRepository, RoadSegmentRepository roadSegmentRepository, RoadSegmentMapper roadSegmentMapper)
     {
         this.roadTypeRepository = roadTypeRepository;
         this.roadSegmentRepository = roadSegmentRepository;
+        this.roadSegmentMapper = roadSegmentMapper;
     }
 
     public List<RoadSegementDTO> getRoadDTOs () {
         var roadSegments = roadSegmentRepository.findAll();
-        return new RoadSegmentMapper().toDTOs(roadSegments);
+        return roadSegmentMapper.toDTOs(roadSegments);
     }
-
 
     public List<RoadTypeDTO> getRoadTypeDTOs() {
         var roadTypes = roadTypeRepository.findAll();

@@ -13,11 +13,9 @@ import java.util.List;
 @RequestMapping("/api/roads") // /api om verschil te maken tussen ... en html pages
 public class RoadSegementController {
 
-    private final RoadTypeRepository roadTypeRepository; // moet dit niet RoadSegmentRepository zijn?
     private final RoadService roadService;
 
     public RoadSegementController(RoadTypeRepository roadTypeRepository, RoadService roadService) {
-        this.roadTypeRepository = roadTypeRepository;
         this.roadService = roadService;
     }
 

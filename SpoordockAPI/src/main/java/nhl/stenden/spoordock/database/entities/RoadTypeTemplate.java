@@ -20,12 +20,6 @@ public class RoadTypeTemplate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private UUID id;
 
-<<<<<<< HEAD
-    // @OneToMany(mappedBy = "roadSegment")
-    // private List<RoadTypeTemplate> roadTemplates;
-
-=======
->>>>>>> RvO/Roads_feature
     @Column(name = "standaard_breedte")
     private int standardWidth;
 
