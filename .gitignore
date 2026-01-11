@@ -50,3 +50,7 @@ __pycache__
 
 ### OLLAMA ###
 .ollama/.models
+
+### Node ###
+.env
+node_modules
