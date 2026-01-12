@@ -11,8 +11,9 @@ async function init() {
     const featureStore = new FeatureStore();
     
     // We kijken of we lokaal moeten draaien (handig voor testen zonder backend)
-    const useLocal = new URLSearchParams(window.location.search).has('local') || true;
-    const api = new FeaturesApi('', useLocal);
+    const useLocal = false;
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    const api = new FeaturesApi(apiBaseUrl, useLocal);
     
     // Cesium viewer opstarten
     const viewer = await setupViewer('cesiumContainer');
