@@ -18,10 +18,11 @@ export class FeaturesApi {
             return Array.from(this.localStore.values());
         }
         try {
+
             // We proberen beide lijstjes op te halen
             const [buildings, roads] = await Promise.all([
-                fetch('/api/buildings/list?embedTypes=true').then(r => r.ok ? r.json() : []),
-                fetch('/api/roads/list').then(r => r.ok ? r.json() : [])
+                fetch(`${this.baseUrl}/api/buildings/list?embedTypes=true`).then(r => r.ok ? r.json() : []),
+                fetch(`${this.baseUrl}/api/roads/list`).then(r => r.ok ? r.json() : [])
             ]);
 
             // Gebouwen even omzetten naar ons eigen formaatje
@@ -76,7 +77,7 @@ export class FeaturesApi {
                 return feature;
             }
 
-            const url = '/api/buildings/building';
+            const url = `${this.baseUrl}/api/buildings/building`;
             
             const body = {
                 buildingId: feature.id,
@@ -123,7 +124,7 @@ export class FeaturesApi {
                 return feature;
             }
 
-            const url = `/api/buildings/building/${id}`;
+            const url = `${this.baseUrl}/api/buildings/building/${id}`;
             
             const body = {
                 buildingId: feature.id,
