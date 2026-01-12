@@ -1,0 +1,18 @@
+services:
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: spoordok_frontend_dev
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mount source code for hot reloading
+      - ./src:/app/src
+      - ./index.html:/app/index.html
+      - ./vite.config.js:/app/vite.config.js
+      - ./package.json:/app/package.json
+      - ./package-lock.json:/app/package-lock.json
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=http://api:6001/api
