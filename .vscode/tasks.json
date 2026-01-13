@@ -7,13 +7,13 @@
         {
             "label": "API Debug Up",
             "type": "shell",
-            "command":"docker compose -f ${workspaceFolder}/docker-compose.debug-api.yml up --detach --build --wait",
+            "command":"docker compose -f ${workspaceFolder}/docker-compose.yml up --detach --build --wait",
             "dependsOn": [ "API Debug Down"]
         },
         {
             "label": "API Debug Down",
             "type": "shell",
-            "command":"docker compose -f ${workspaceFolder}/docker-compose.debug-api.yml down",
+            "command":"docker compose -f ${workspaceFolder}/docker-compose.yml down",
         }
     ]
 
