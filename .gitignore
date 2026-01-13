@@ -3,6 +3,8 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+.DS_Store
+
 ### STS ###
 .apt_generated
 .classpath
@@ -50,3 +52,7 @@ __pycache__
 
 ### OLLAMA ###
 .ollama/.models
+
+### Node ###
+.env
+node_modules

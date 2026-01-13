@@ -54,7 +54,6 @@ public class AiAgentController {
         @RequestHeader(value = "model", required = false) String model
     ) {
         
-         // Use a new final variable immediately
         // Use a new final variable immediately
         final String selectedModel = (model == null || model.isEmpty()) 
             ? llmConfiguration.getDefaultModel() 
@@ -97,7 +96,7 @@ public class AiAgentController {
     }
 
 
-    /*SSE EVENT
+    /*SSE EVENT javascript code
         async function streamChat(id, message, model) {
             const response = await fetch(`/api/ai/chat/${id}`, {
                 method: 'POST',

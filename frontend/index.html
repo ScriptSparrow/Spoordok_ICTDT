@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spoordok Digital Twin</title>
+    <link rel="stylesheet" href="/src/ui.css">
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            background: #0b0e14;
+            color: #e6e6e6;
+        }
+        #app-root {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        #cesiumContainer {
+            position: absolute;
+            inset: 0;
+        }
+        /* Eenvoudige tooltip-basis */
+        [data-tooltip] {
+            position: relative;
+        }
+        [data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: -34px;
+            white-space: nowrap;
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+<div id="app-root">
+    <div id="cesiumContainer"></div>
+    <!-- Linkerpaneel met tools -->
+    <aside id="left-panel" class="panel left">
+        <div class="panel-section">
+            <h3>Tools</h3>
+            <div class="tool-row">
+                <button id="btn-draw" class="btn" data-tooltip="Teken polygon (klik om punten te plaatsen, klik laatste punt om te sluiten)">Teken polygon</button>
+                <button id="btn-road" class="btn" data-tooltip="Teken weg (polyline)">Teken weg</button>
+                <button id="btn-edit" class="btn" data-tooltip="Bewerken: selecteer feature om eigenschappen aan te passen">Bewerken</button>
+                <button id="btn-delete" class="btn" data-tooltip="Verwijder geselecteerde feature">Verwijder</button>
+            </div>
+            <div class="tool-row">
+                <button id="btn-undo" class="btn" data-tooltip="Ongedaan maken (Ctrl+Z)">Undo</button>
+                <button id="btn-redo" class="btn" data-tooltip="Opnieuw (Ctrl+Y)">Redo</button>
+            </div>
+        </div>
+        <div class="panel-section">
+            <h4>Eigenschappen</h4>
+            <label class="field">
+                <span>Functie</span>
+                <select id="select-type">
+                    <option value="parks">Groen (Parks)</option>
+                    <option value="water">Water</option>
+                    <option value="housing" selected>Wonen</option>
+                    <option value="office">Kantoor</option>
+                    <option value="industry">Industrie</option>
+                    <option value="road">Weg</option>
+                </select>
+            </label>
+            <label class="field">
+                <span>Hoogte / Breedte (m)</span>
+                <input id="height-range" type="range" min="0" max="100" step="1" value="10" />
+                <input id="height-input" type="number" min="0" max="500" step="1" value="10" />
+            </label>
+            <div class="legend">
+                <div><span class="swatch" style="background:#34d399"></span>Groen</div>
+                <div><span class="swatch" style="background:#60a5fa"></span>Water</div>
+                <div><span class="swatch" style="background:#fbbf24"></span>Wonen</div>
+                <div><span class="swatch" style="background:#9ca3af"></span>Industrie</div>
+                <div><span class="swatch" style="background:#a78bfa"></span>Kantoor</div>
+                <div><span class="swatch" style="background:#ffff00"></span>Weg</div>
+            </div>
+        </div>
+        <div class="panel-section">
+            <button id="btn-reset-camera" class="btn" data-tooltip="Reset camera naar Spoordok">Reset camera</button>
+        </div>
+    </aside>
+
+    <!-- Rechter informatiepaneel -->
+    <aside id="right-panel" class="panel right">
+        <div class="panel-section">
+            <h3>Informatie</h3>
+            <div id="info-content">
+                <p>Selecteer een feature om details te zien.</p>
+            </div>
+        </div>
+        <div class="panel-section">
+            <button id="btn-simulate" class="btn primary" data-tooltip="Start AI-agent simulatie">Simuleer leefkwaliteit</button>
+            <div id="simulation-result" class="muted"></div>
+        </div>
+    </aside>
+
+    <!-- Toasts -->
+    <div id="toast-container"></div>
+</div>
+<script type="module" src="/src/app.js"></script>
+</body>
+</html>
