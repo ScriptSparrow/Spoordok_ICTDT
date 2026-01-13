@@ -1,0 +1,22 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cesium": "^1.137.0"
+  },
+  "devDependencies": {
+    "vite": "^7.3.1",
+    "vite-plugin-cesium": "^1.2.23"
+  }
+}
