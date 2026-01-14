@@ -13,6 +13,8 @@ import nhl.stenden.spoordock.database.BuildingTypeRepository;
 import nhl.stenden.spoordock.database.entities.BuildingPolygonEmbeddingEntity;
 import nhl.stenden.spoordock.database.entities.BuildingPolygonEntity;
 import nhl.stenden.spoordock.llmService.OllamaConnectorService;
+import nhl.stenden.spoordock.llmService.ToolHandling.ToolFunctionCall;
+import nhl.stenden.spoordock.llmService.ToolHandling.ToolParameter;
 import nhl.stenden.spoordock.services.mappers.BuildingEmbeddingMapper;
 import nhl.stenden.spoordock.services.mappers.BuildingPolygonMapper;
 
@@ -109,7 +111,6 @@ public class BuildingService {
 
             buildingPolygonEmbeddingRepository.save(embeddingEntity);
         });
-
     }
 
 
@@ -117,7 +118,13 @@ public class BuildingService {
 
     // }
     
-    private List<String> getBuildingsBasedOnDescription(String prompt, int limit){
+    @ToolFunctionCall(
+        name = "get_buildings_based_on_description",
+        description = "Get a list of building descriptions (full text) that match the given description based on embedding search. \n Useful for finding buildings that match a certain description or function."
+    )
+    private List<String> getBuildingsBasedOnDescription(
+        @ToolParameter(description = "The fonetic search string to search the embeddings for.") String prompt, 
+        @ToolParameter(description = "The maximum number of building descriptions to return.") int limit){
         float[] promptEmbedding = ollamaConnectorService.createEmbedding(prompt);
         return buildingPolygonEmbeddingRepository
             .findNearestByEmbedding(promptEmbedding, 5)

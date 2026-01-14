@@ -3,7 +3,6 @@ package nhl.stenden.spoordock.database;
 import java.util.List;
 
 import org.locationtech.jts.geom.Polygon;
-import org.springframework.boot.autoconfigure.info.ProjectInfoProperties.Build;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.ListCrudRepository;
 import nhl.stenden.spoordock.database.entities.BuildingPolygonEmbeddingEntity;
