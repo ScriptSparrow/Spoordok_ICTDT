@@ -111,6 +111,17 @@ public class BuildingService {
         });
 
     }
+
+
+    // private List<String> getBuildingsInZone(){
+
+    // }
     
+    private List<String> getBuildingsBasedOnDescription(String prompt, int limit){
+        float[] promptEmbedding = ollamaConnectorService.createEmbedding(prompt);
+        return buildingPolygonEmbeddingRepository
+            .findNearestByEmbedding(promptEmbedding, 5)
+            .stream().map(x->x.getEmbeddingSource()).toList();
+    }
 
 }
