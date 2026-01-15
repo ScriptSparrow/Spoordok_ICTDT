@@ -34,4 +34,27 @@ public class RoadService {
         var roadTypes = roadTypeRepository.findAll();
         return new RoadTypeMapper().toDTOs(roadTypes);
     }
+
+    public void addRoadSegment(RoadSegementDTO roadSegementDTO) throws IllegalArgumentException {
+        if(roadSegmentRepository.existsById(roadSegementDTO.getId())){
+            throw new IllegalArgumentException("Road segment with ID " + roadSegementDTO.getId() + " already exists.");
+        }
+
+        var entity = roadSegmentMapper.toEntity(roadSegementDTO);
+        roadSegmentRepository.save(entity);
+    }
+
+    public void deleteRoadSegment(RoadSegementDTO roadSegementDTO)  {
+        roadSegmentRepository.deleteById(roadSegementDTO.getId());
+    }
+
+    public void updateRoadSegment(RoadSegementDTO roadSegementDTO) throws IllegalArgumentException {
+        if(!roadSegmentRepository.existsById(roadSegementDTO.getId())){
+            throw new IllegalArgumentException("Road segment with ID " + roadSegementDTO.getId() + " does not exist.");
+        }
+
+        var entity = roadSegmentMapper.toEntity(roadSegementDTO);
+        roadSegmentRepository.save(entity);
+    }
+
 }
