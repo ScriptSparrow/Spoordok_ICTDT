@@ -24,7 +24,7 @@ export class FeaturesApi {
      */
     async getList(){
         try {
-            const response = await fetch(`${this.baseUrl}/api/features/list`);
+            const response = await fetch(`${this.baseUrl}/api/building/types/list`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
