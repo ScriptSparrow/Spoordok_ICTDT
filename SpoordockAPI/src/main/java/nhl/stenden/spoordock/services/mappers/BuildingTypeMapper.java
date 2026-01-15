@@ -13,28 +13,32 @@ public class BuildingTypeMapper implements Mapper<BuildingTypeDTO, BuildingTypeE
     @Override
     public BuildingTypeDTO toDTO(BuildingTypeEntity entity) {
         
-        return new BuildingTypeDTO(){
-            {
-                setBuildingTypeId(entity.getTypeId());
-                setName(entity.getName());
-                setDescription(entity.getDescription());
-                setFloorHeight(entity.getFloorHeight());
-                setColor(entity.getColor());
-            }
-        };
+        return new BuildingTypeDTO(
+            entity.getTypeId(),
+            entity.getName(),
+            entity.getDescription(),
+            entity.getUnit(),
+            entity.getCostPerUnit(),
+            entity.isInhabitable(),
+            entity.getResidentsPerUnit(),
+            entity.getPoints(),
+            entity.getColor()
+        );
     }
 
     @Override
     public BuildingTypeEntity toEntity(BuildingTypeDTO dto) {
-        return new BuildingTypeEntity(){
-            {
-                setTypeId(dto.getBuildingTypeId());
-                setName(dto.getName());
-                setDescription(dto.getDescription());
-                setFloorHeight(dto.getFloorHeight());
-                setColor(dto.getColor());
-            }
-        };
+        return new BuildingTypeEntity(
+            dto.getBuildingTypeId(),
+            dto.getLabelName(),
+            dto.getDescription(),
+            dto.getUnit(),
+            dto.getCostPerUnit(),
+            dto.isInhabitable(),
+            dto.getResidentsPerUnit(),
+            dto.getPoints(),
+            dto.getColor()
+        );
     }
 
     @Override
