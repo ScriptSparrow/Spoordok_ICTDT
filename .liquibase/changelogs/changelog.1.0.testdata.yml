@@ -1,3 +1,237 @@
-
-
 # TODO
+
+databaseChangeLog:
+  - changeSet:
+      id: 0
+      author: test-data
+      comment: Insert test data for building types
+      context: dev
+      changes:
+        - insert:
+            tableName: gebouwtypes
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: naam
+                  value: "Vrijstaand huis"
+              - column:
+                  name: omschrijving
+                  value: "Vrijstaand huis - per m3"
+              - column:
+                  name: eenheid
+                  value: "m3"
+              - column:
+                  name: kosten_per_eenheid
+                  valueNumeric: 500.00
+              - column:
+                  name: bewoonbaar
+                  valueBoolean: true
+              - column:
+                  name: bewoners_per_eenheid
+                  valueNumeric: 0.005
+              - column:
+                  name: punten_per_eenheid
+                  valueNumeric: 4
+              - column:
+                  name: kleur
+                  value: "#f97316"
+        - insert:
+            tableName: gebouwtypes
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: naam
+                  value: "Rijtjeswoning"
+              - column:
+                  name: omschrijving
+                  value: "Rijtjeswoning - per m3"
+              - column:
+                  name: eenheid
+                  value: "m3"
+              - column:
+                  name: kosten_per_eenheid
+                  valueNumeric: 400.00
+              - column:
+                  name: bewoonbaar
+                  valueBoolean: true
+              - column:
+                  name: bewoners_per_eenheid
+                  valueNumeric: 0.01
+              - column:
+                  name: punten_per_eenheid
+                  valueNumeric: 6
+              - column:
+                  name: kleur
+                  value: "#fbbf24"
+        - insert:
+            tableName: gebouwtypes
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: naam
+                  value: "Appartement"
+              - column:
+                  name: omschrijving
+                  value: "Appartement - per m3"
+              - column:
+                  name: eenheid
+                  value: "m3"
+              - column:
+                  name: kosten_per_eenheid
+                  valueNumeric: 300.00
+              - column:
+                  name: bewoonbaar
+                  valueBoolean: true
+              - column:
+                  name: bewoners_per_eenheid
+                  valueNumeric: 0.006
+              - column:
+                  name: punten_per_eenheid
+                  valueNumeric: 5
+              - column:
+                  name: kleur
+                  value: "#eab308"
+        - insert:
+            tableName: gebouwtypes
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: naam
+                  value: "Bedrijfsgebouw"
+              - column:
+                  name: omschrijving
+                  value: "Bedrijfsgebouw - per m3"
+              - column:
+                  name: eenheid
+                  value: "m3"
+              - column:
+                  name: kosten_per_eenheid
+                  valueNumeric: 200.00
+              - column:
+                  name: bewoonbaar
+                  valueBoolean: false
+              - column:
+                  name: bewoners_per_eenheid
+                  valueNumeric: 0.018
+              - column:
+                  name: punten_per_eenheid
+                  valueNumeric: 2
+              - column:
+                  name: kleur
+                  value: "#9ca3af"
+        - insert:
+            tableName: gebouwtypes
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: naam
+                  value: "Park/groen"
+              - column:
+                  name: omschrijving
+                  value: "Park/groen - per m2"
+              - column:
+                  name: eenheid
+                  value: "m2"
+              - column:
+                  name: kosten_per_eenheid
+                  valueNumeric: 150.00
+              - column:
+                  name: bewoonbaar
+                  valueBoolean: false
+              - column:
+                  name: punten_per_eenheid
+                  valueNumeric: 10
+              - column:
+                  name: kleur
+                  value: "#34d399"
+        - insert:
+            tableName: gebouwtypes
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: naam
+                  value: "Wegen"
+              - column:
+                  name: omschrijving
+                  value: "Wegen - per m2"
+              - column:
+                  name: eenheid
+                  value: "m2"
+              - column:
+                  name: kosten_per_eenheid
+                  valueNumeric: 100.00
+              - column:
+                  name: bewoonbaar
+                  valueBoolean: false
+              - column:
+                  name: punten_per_eenheid
+                  valueNumeric: 8
+              - column:
+                  name: kleur
+                  value: "#64748b"
+        - insert:
+            tableName: gebouwtypes
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: naam
+                  value: "Parkeerplaatsen"
+              - column:
+                  name: omschrijving
+                  value: "Parkeerplaatsen - per m2"
+              - column:
+                  name: eenheid
+                  value: "m2"
+              - column:
+                  name: kosten_per_eenheid
+                  valueNumeric: 100.00
+              - column:
+                  name: bewoonbaar
+                  valueBoolean: false
+              - column:
+                  name: punten_per_eenheid
+                  valueNumeric: 6
+              - column:
+                  name: kleur
+                  value: "#6b7280"
+        - insert:
+            tableName: gebouwtypes
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: naam
+                  value: "Parkeerplaatsen overdekt"
+              - column:
+                  name: omschrijving
+                  value: "Parkeerplaatsen overdekt - per m2"
+              - column:
+                  name: eenheid
+                  value: "m2"
+              - column:
+                  name: kosten_per_eenheid
+                  valueNumeric: 1500.00
+              - column:
+                  name: bewoonbaar
+                  valueBoolean: false
+              - column:
+                  name: punten_per_eenheid
+                  valueNumeric: 10
+              - column:
+                  name: kleur
+                  value: "#a78bfa"
