@@ -26,8 +26,11 @@ public class BuildingPolygonDTO {
     @NotNull(message = "Description cannot be null")
     private String description;
     
+//    @Nullable
+//    private BuildingTypeDTO buildingType;
+
     @Nullable
-    private BuildingTypeDTO buildingType;
+    private BuildingTypeDTO2 buildingType;
 
     @NotNull(message = "Polygon cannot be null")
     private PolygonDTO polygon;

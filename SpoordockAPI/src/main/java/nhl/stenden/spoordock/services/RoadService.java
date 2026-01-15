@@ -1,6 +1,6 @@
 package nhl.stenden.spoordock.services;
 
-import nhl.stenden.spoordock.controllers.dtos.RoadSegementDTO;
+import nhl.stenden.spoordock.controllers.dtos.RoadSegmentDTO;
 import nhl.stenden.spoordock.controllers.dtos.RoadTypeDTO;
 import nhl.stenden.spoordock.database.RoadSegmentRepository;
 import nhl.stenden.spoordock.database.RoadTypeRepository;
@@ -25,7 +25,7 @@ public class RoadService {
         this.roadSegmentMapper = roadSegmentMapper;
     }
 
-    public List<RoadSegementDTO> getRoadDTOs () {
+    public List<RoadSegmentDTO> getRoadDTOs () {
         var roadSegments = roadSegmentRepository.findAll();
         return roadSegmentMapper.toDTOs(roadSegments);
     }

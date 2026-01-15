@@ -14,7 +14,7 @@ public class HealthController {
 
     @GetMapping("/ready")
     public ResponseEntity<String> readinessCheck() {   
-        return ResponseEntity.ok("Spoordock API is ready to handle requests 8.");
+        return ResponseEntity.ok("Spoordock API is ready to handle requests 11  .");
     }
 
 }

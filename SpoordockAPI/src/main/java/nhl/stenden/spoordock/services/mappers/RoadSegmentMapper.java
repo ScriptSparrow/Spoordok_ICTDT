@@ -1,6 +1,6 @@
 package nhl.stenden.spoordock.services.mappers;
 
-import nhl.stenden.spoordock.controllers.dtos.RoadSegementDTO;
+import nhl.stenden.spoordock.controllers.dtos.RoadSegmentDTO;
 import nhl.stenden.spoordock.controllers.dtos.RoadTypeDTO;
 import nhl.stenden.spoordock.controllers.dtos.common.Coordinate;
 import nhl.stenden.spoordock.database.entities.RoadSegment;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class RoadSegmentMapper implements Mapper<RoadSegementDTO, RoadSegment> {
+public class RoadSegmentMapper implements Mapper<RoadSegmentDTO, RoadSegment> {
 
     private final RoadTypeMapper roadTypeMapper;
     private final LineStringMapper lineStringMapper;
@@ -22,11 +22,11 @@ public class RoadSegmentMapper implements Mapper<RoadSegementDTO, RoadSegment> {
     }
 
     @Override
-    public RoadSegementDTO toDTO(RoadSegment roadSegment) {
+    public RoadSegmentDTO toDTO(RoadSegment roadSegment) {
 
         RoadTypeDTO roadTypeDTO = roadTypeMapper.toDTO(roadSegment.getRoadTypeTemplate());
         List<Coordinate> coordinates = lineStringMapper.toDTO(roadSegment.getRoadPoints());
-        return new RoadSegementDTO(
+        return new RoadSegmentDTO(
                 roadSegment.getId(),
                 roadTypeDTO,
                 roadSegment.getRoadDescription(),
@@ -34,7 +34,7 @@ public class RoadSegmentMapper implements Mapper<RoadSegementDTO, RoadSegment> {
     }
 
     @Override
-    public RoadSegment toEntity(RoadSegementDTO roadDTO) {
+    public RoadSegment toEntity(RoadSegmentDTO roadDTO) {
 
         RoadTypeTemplate roadTypeTemplate = roadTypeMapper.toEntity(roadDTO.getRoadType());
         org.locationtech.jts.geom.LineString roadPoints = lineStringMapper.toEntity(roadDTO.getCoordinates());
@@ -47,12 +47,12 @@ public class RoadSegmentMapper implements Mapper<RoadSegementDTO, RoadSegment> {
 
     // simplified foreach loop, place every in a new list
     @Override
-    public List<RoadSegementDTO> toDTOs(List<RoadSegment> roadSegments) {
+    public List<RoadSegmentDTO> toDTOs(List<RoadSegment> roadSegments) {
         return roadSegments.stream().map(this::toDTO).toList();
     }
 
     @Override
-    public List<RoadSegment> toEntities(List<RoadSegementDTO> roadDTOS) {
+    public List<RoadSegment> toEntities(List<RoadSegmentDTO> roadDTOS) {
         return roadDTOS.stream().map(this::toEntity).toList();
     }
 }

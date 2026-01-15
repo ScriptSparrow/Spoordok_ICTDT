@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Getter
 @Setter
-public class RoadSegementDTO {
+public class RoadSegmentDTO {
 
     private UUID id;
     @NotNull
@@ -20,7 +20,7 @@ public class RoadSegementDTO {
     @NotNull
     private List<Coordinate> coordinates;
 
-    public RoadSegementDTO(UUID id, RoadTypeDTO roadType, String roadDescription, List<Coordinate> coordinates) {
+    public RoadSegmentDTO(UUID id, RoadTypeDTO roadType, String roadDescription, List<Coordinate> coordinates) {
         this.id = id;
         this.roadType = roadType;
         this.roadDescription = roadDescription;
