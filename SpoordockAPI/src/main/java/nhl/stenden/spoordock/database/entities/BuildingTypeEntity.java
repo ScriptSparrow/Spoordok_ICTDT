@@ -8,12 +8,16 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Setter;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "gebouwtypes")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class BuildingTypeEntity {
 
     @Id
@@ -27,8 +31,20 @@ public class BuildingTypeEntity {
     @Column(name = "omschrijving")
     private String description;
 
-    @Column(name = "verdiepings_hoogte")
-    private double floorHeight;
+    @Column(name = "eenheid")
+    private String unit;
+
+    @Column(name = "kosten_per_eenheid")
+    private String costPerUnit;
+
+    @Column(name = "bewoonbaar")
+    private boolean inhabitable;
+
+    @Column(name = "bewoners_per_eenheid")
+    private Double residentsPerUnit;
+
+    @Column(name = "punten_per_eenheid")
+    private int points;
 
     @Column(name = "kleur")
     private String color;
