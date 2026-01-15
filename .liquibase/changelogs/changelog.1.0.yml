@@ -36,30 +36,36 @@ databaseChangeLog:
                   constraints:
                     nullable: true
               - column: 
-                  name: bestemming
+                  name: eenheid
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column: 
+                  name: kosten_per_eenheid
+                  type: double precision
+                  constraints:
+                    nullable: false
+              - column: 
+                  name: bewoonbaar
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: bewoners_per_eenheid
+                  type: double precision
+                  constraints:
+                    nullable: true
+              - column: 
+                  name: punten_per_eenheid
                   type: integer
                   constraints:
-                    nullable: false
-              - column: 
-                  name: kosten_per_m3
-                  type: double precision
-                  constraints:
-                    nullable: false
-              - column: 
-                  name: verdiepings_hoogte
-                  type: double precision
-                  constraints:
-                    nullable: false
+                    nullable: true
               - column:
                   name: kleur
                   type: varchar(50)
                   constraints:
                     nullable: false
-              - column: 
-                  name: possible_textures
-                  type: text
-                  constraints:
-                    nullable: true
+             
 
         - createTable:
             tableName: polygones
