@@ -26,5 +26,4 @@ public class RoadSegementDTO {
         this.roadDescription = roadDescription;
         this.coordinates = coordinates;
     }
-
 }
