@@ -4,4 +4,6 @@ databaseChangeLog:
   - include:
       file: changelogs/changelog.1.0.yml
   - include:
+      file: changelogs/changelog.1.0.testdata.yml
+  - include:
       file: changelogs/changelog.1.1.yml
