@@ -27,7 +27,7 @@ services:
   liquibase:
     extends:
       file: ./.liquibase/docker-compose.yml
-      service: liquibase
+      service: liquibase-dev
     container_name: liquibase
     environment:
       <<: *common-variables
