@@ -16,3 +16,4 @@ services:
     environment:
       - NODE_ENV=development
       - VITE_API_BASE_URL=http://api:6001/api
+      - CHOKIDAR_USEPOLLING=true

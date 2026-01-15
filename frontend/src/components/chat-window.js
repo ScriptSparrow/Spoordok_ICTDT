@@ -1,5 +1,43 @@
 import { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
 
+// Render newlines like chat apps typically do
+marked.setOptions({ gfm: true, breaks: true });
+
+// Keep per-element markdown buffer + throttled render timer
+const mdState = new WeakMap();
+
+function appendMarkdownChunk(el, chunk, delayMs = 80) {
+    if (!el) return;
+
+    let state = mdState.get(el);
+    if (!state) {
+        state = { buffer: "", timerId: null };
+        mdState.set(el, state);
+    }
+
+    state.buffer += chunk;
+
+    // Throttle re-renders (avoid parsing on every tiny chunk)
+    if (state.timerId) return;
+
+    state.timerId = setTimeout(() => {
+        state.timerId = null;
+        // Re-render whole buffer (marked isn't incremental)
+        el.innerHTML = marked.parse(state.buffer);
+    }, delayMs);
+}
+
+function flushMarkdown(el) {
+    const state = mdState.get(el);
+    if (!el || !state) return;
+
+    if (state.timerId) {
+        clearTimeout(state.timerId);
+        state.timerId = null;
+    }
+    el.innerHTML = marked.parse(state.buffer);
+}
+
 const chatWindowTemplate = document.createElement('template');
 chatWindowTemplate.innerHTML = `
 
@@ -173,9 +211,14 @@ let temp = ` <div class="chat-row">
 
 class ChatWindow extends HTMLElement {
 
+    static observedAttributes = ['base-url'];
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
+
+        const envBase = (import.meta?.env?.VITE_API_BASE_URL ?? '').trim();
+        this._baseUrl = (this.getAttribute('base-url') ?? envBase ?? '').trim() || '/api';
     }
 
     connectedCallback() {
@@ -200,7 +243,7 @@ class ChatWindow extends HTMLElement {
     }
 
     async fillModels(){
-        const response = await fetch('/api/ai/models');
+        const response = await fetch(`${this._baseUrl}/api/ai/models`);
         var json = await response.json();
         this.modelSelection.innerHTML = '';
         
@@ -246,7 +289,7 @@ class ChatWindow extends HTMLElement {
         let currentThinkingDiv = null;
         let currentToolCallDiv = null;
 
-        function onThinkingReceived(message){
+        function onThinkingReceived(chunk){
             currentToolCallDiv = null;
             currentContentDiv = null;
 
@@ -262,77 +305,69 @@ class ChatWindow extends HTMLElement {
                     if (thinkingTextElement) {
                         thinkingTextElement.classList.toggle('show');
                     }
-                }
+                };
 
                 currentThinkingDiv = document.createElement('div');
-                currentThinkingDiv.classList.add('thinking-text');
-                currentThinkingDiv.classList.add('markdown-replace');
+                currentThinkingDiv.classList.add('thinking-text', 'markdown-replace');
 
                 thinkingContainerDiv.appendChild(collapseButton);
                 thinkingContainerDiv.appendChild(currentThinkingDiv);
                 botMessageBubble.appendChild(thinkingContainerDiv);
             }
-            currentThinkingDiv.innerText += message;
+
+            appendMarkdownChunk(currentThinkingDiv, chunk);
         }
 
-        function onToolCallReceived(message){
-            
+        function onToolCallReceived(chunk){
+            // TODO
         }
 
-        function onContentReceived(message){
+        function onContentReceived(chunk){
             currentThinkingDiv = null;
             currentToolCallDiv = null;
 
             if(!currentContentDiv){
                 currentContentDiv = document.createElement('div');
-                currentContentDiv.classList.add('bot-content');
-                currentContentDiv.classList.add('markdown-replace');
+                currentContentDiv.classList.add('bot-content', 'markdown-replace');
                 botMessageBubble.appendChild(currentContentDiv);
             }
 
-            currentContentDiv.innerText += message;
+            appendMarkdownChunk(currentContentDiv, chunk);
         }
 
-        const response = await fetch(`/api/ai/chat/${this.chatId}`, {
+        const response = await fetch(`${this._baseUrl}/api/ai/chat/${this.chatId}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ 
-                message: prompt,
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: prompt })
         });
 
         function handleEvent(event){
-            function escapeAndFormat(str) {
-                const escaped = str
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;');
-                return escaped.replace(/\n/g, '<br/>');
+            // Expecting SSE-ish chunks: "data: {...}\n\n"
+            if (!event.startsWith('data:')) return;
+
+            const data = event.slice('data:'.length).trim();
+            if (!data) return;
+
+            let json;
+            try {
+                json = JSON.parse(data);
+            } catch {
+                return;
             }
 
-            console.log('Raw line:', event);
-            if (event.startsWith('data:')) {
-                const data = event.replace('data:', '');
-                const json = JSON.parse(data);
+            const chunk = json.chunk ?? '';
+            if (String(chunk).trim() === '') return;
 
-                const text = escapeAndFormat(json.chunk);
-                if(text.trim() === ''){
-                    return;
-                }
-
-                switch(json.chunkType){
-                    case 'thinking':
-                        onThinkingReceived(text);
-                        break;
-                    case 'tool_call':
-                        
-                        break;
-                    case 'content':
-                        onContentReceived(text);
-                        break;
-                }
+            switch(json.chunkType){
+                case 'thinking':
+                    onThinkingReceived(String(chunk));
+                    break;
+                case 'tool_call':
+                    onToolCallReceived(String(chunk));
+                    break;
+                case 'content':
+                    onContentReceived(String(chunk));
+                    break;
             }
         }
 
@@ -344,22 +379,20 @@ class ChatWindow extends HTMLElement {
             const {done, value} = await reader.read();
             if (done) break;
 
-            const chunk = decoder.decode(value, {stream: true});
-            buffer += chunk;
-            // Split on double newline (event separator)
+            buffer += decoder.decode(value, {stream: true});
+
             const events = buffer.split('\n\n');
-            buffer = events.pop(); // Keep incomplete event in buffer for next read
+            buffer = events.pop();
             for (const rawLine of events) {
                 handleEvent(rawLine);
             }
+
+            // Keep scroll pinned while streaming
+            this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
         }
 
-        botMessageBubble.querySelectorAll('.markdown-replace').forEach(elem => {
-            const mdText = elem.innerText;
-            elem.innerText = '';
-            const html = marked.parse(mdText);
-            elem.innerHTML = html;
-        });
+        // Flush any throttled renders at the end (so final state is correct)
+        botMessageBubble.querySelectorAll('.markdown-replace').forEach(elem => flushMarkdown(elem));
 
         botMessageBubble.classList.add('complete');
     }
