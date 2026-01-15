@@ -11,7 +11,12 @@ services:
       LIQUIBASE_COMMAND_USERNAME: ${DB_USERNAME:-myuser}
       LIQUIBASE_COMMAND_PASSWORD: ${DB_PASSWORD:-mypassword}
       LIQUIBASE_COMMAND_CHANGELOG_FILE: changelog-root.yml
+    command: update --logLevel=DEBUG
+
+  liquibase-dev:
+    extends:
+      service: liquibase
     volumes:
       - ./changelogs:/liquibase/changelog/changelogs
       - ./changelog-root.yml:/liquibase/changelog/changelog-root.yml
-    command: update --logLevel=DEBUG
+    command: update --contexts=dev --logLevel=DEBUG
