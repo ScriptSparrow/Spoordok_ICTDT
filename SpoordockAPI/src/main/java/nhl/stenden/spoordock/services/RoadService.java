@@ -34,4 +34,5 @@ public class RoadService {
         var roadTypes = roadTypeRepository.findAll();
         return new RoadTypeMapper().toDTOs(roadTypes);
     }
+    
 }

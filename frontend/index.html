@@ -44,6 +44,8 @@
             pointer-events: none;
             z-index: 9999;
         }
+
+        
     </style>
 </head>
 <body>
@@ -112,6 +114,25 @@
 
     <!-- Toasts -->
     <div id="toast-container"></div>
+
+    <div></div>
+
+    <!-- CSS-only state -->
+    <input type="checkbox" id="chat-toggle" />
+
+    <!-- Floating button toggles the checkbox -->
+    <label id="chat-toggle-button" for="chat-toggle" aria-label="Open chat">
+        Open
+    </label>
+
+    <!-- Normal div now (not popover) -->
+    <div id="chat-window-wrapper">
+        <!-- Optional close control inside -->
+        <label class="chat-close" for="chat-toggle" aria-label="Close chat">✕</label>
+        <chat-window base-url="http://localhost:6001"></chat-window>
+    </div>
+
+
 </div>
 <script type="module" src="/src/app.js"></script>
 </body>

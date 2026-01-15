@@ -2,6 +2,7 @@ import { setupViewer, flyToSpoordok } from './cesium/viewer.js';
 import { FeatureStore } from './editor/featureStore.js';
 import { CesiumEditor } from './editor/cesiumEditor.js';
 import { FeaturesApi } from './api/featuresApi.js';
+import './components/chat-window.js';
 
 /**
  * De main entry point van onze app.
