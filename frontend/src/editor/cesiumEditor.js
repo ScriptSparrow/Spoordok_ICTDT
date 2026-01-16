@@ -568,15 +568,38 @@ export class CesiumEditor {
 
     /**
      * Past de actie echt toe in de store en backend.
+     * 
+     * PR1: Bij CREATE wordt de tijdelijke ID vervangen door de database-gegenereerde UUID.
+     * De backend retourneert de echte UUID die we gebruiken om de lokale data bij te werken.
      */
     async apply(command) {
         console.log('CesiumEditor: Actie toepassen', command);
         try {
             switch (command.type) {
                 case 'CREATE':
+                    // PR1: Sla tijdelijke ID op voor latere vervanging
+                    const tempId = command.feature.id;
                     this.featureStore.addFeature(command.feature);
                     this.syncEntity(command.feature);
-                    await this.api.create(command.feature);
+                    
+                    // PR1: Haal de opgeslagen feature op met database-gegenereerde UUID
+                    const savedFeature = await this.api.create(command.feature);
+                    
+                    // PR1: Vervang tijdelijke ID door database-UUID als deze verschillend is
+                    if (savedFeature.id && savedFeature.id !== tempId) {
+                        console.log('CesiumEditor: ID-swap van', tempId, 'naar', savedFeature.id);
+                        
+                        // Verwijder entity en feature met tijdelijke ID
+                        this.featureStore.removeFeature(tempId);
+                        this.viewer.entities.removeById(tempId);
+                        
+                        // Update command.feature met nieuwe ID (voor undo/redo)
+                        command.feature.id = savedFeature.id;
+                        
+                        // Voeg feature toe met database-gegenereerde UUID
+                        this.featureStore.addFeature(command.feature);
+                        this.syncEntity(command.feature);
+                    }
                     break;
                 case 'UPDATE':
                     this.featureStore.updateFeature(command.id, command.newFeature);
