@@ -5,37 +5,35 @@ import java.util.UUID;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PostLoad;
-import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.locationtech.jts.geom.Polygon;
-import org.springframework.data.domain.Persistable;
 
 /**
  * Entity voor gebouw-polygonen in de database.
  * 
- * Implementeert Persistable<UUID> om Spring Data JPA expliciet te vertellen
- * wanneer een entity "nieuw" is. Dit is nodig omdat de frontend zelf UUID's
- * genereert, waardoor JPA anders een merge() zou proberen in plaats van persist().
+ * De UUID wordt gegenereerd door de database via gen_random_uuid().
  * 
- * Zonder deze interface zou een StaleObjectStateException optreden bij het opslaan
- * van nieuwe polygonen met een door de frontend gegenereerde UUID.
+ * PR1: Persistable<UUID> interface verwijderd - UUID generatie verplaatst
+ * van frontend naar database voor betere beveiliging en consistentie.
  */
 @Entity
 @Table(name = "polygones")
 @Getter
 @Setter
 @NoArgsConstructor
-public class BuildingPolygonEntity implements Persistable<UUID> {
+public class BuildingPolygonEntity {
 
+    // PR1: @GeneratedValue toegevoegd - database genereert nu de UUID
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
     private UUID buildingId;
 
@@ -58,63 +56,17 @@ public class BuildingPolygonEntity implements Persistable<UUID> {
     private double height;
 
     /**
-     * Transient veld om bij te houden of de entity nieuw is.
-     * Dit wordt niet opgeslagen in de database.
-     * Standaard true voor nieuwe entities (aangemaakt via constructor).
+     * Constructor voor het aanmaken van een nieuwe entity zonder ID.
+     * De database genereert automatisch een UUID bij het opslaan.
+     * 
+     * PR1: buildingId parameter verwijderd - database genereert de UUID
      */
-    @Transient
-    private boolean isNew = true;
-
-    /**
-     * Constructor voor het aanmaken van een nieuwe entity.
-     * isNew blijft true zodat JPA weet dat dit een INSERT moet worden.
-     */
-    public BuildingPolygonEntity(UUID buildingId, String name, String description, 
+    public BuildingPolygonEntity(String name, String description, 
                                   BuildingTypeEntity buildingType, Polygon polygon, double height) {
-        this.buildingId = buildingId;
         this.name = name;
         this.description = description;
         this.buildingType = buildingType;
         this.polygon = polygon;
         this.height = height;
-        this.isNew = true; // Expliciet markeren als nieuw
-    }
-
-    // === Persistable interface implementatie ===
-
-    /**
-     * Retourneert de ID van deze entity (vereist door Persistable).
-     */
-    @Override
-    public UUID getId() {
-        return buildingId;
-    }
-
-    /**
-     * Vertelt Spring Data JPA of deze entity nieuw is.
-     * Als true: JPA voert een INSERT (persist) uit.
-     * Als false: JPA voert een UPDATE (merge) uit.
-     */
-    @Override
-    public boolean isNew() {
-        return isNew;
-    }
-
-    /**
-     * Callback na het laden uit de database.
-     * Markeert de entity als "niet nieuw" omdat het al in de database staat.
-     */
-    @PostLoad
-    void markNotNew() {
-        this.isNew = false;
-    }
-
-    /**
-     * Callback na het opslaan in de database.
-     * Markeert de entity als "niet nieuw" zodat volgende saves een UPDATE worden.
-     */
-    @PostPersist
-    void markNotNewAfterPersist() {
-        this.isNew = false;
     }
 }
