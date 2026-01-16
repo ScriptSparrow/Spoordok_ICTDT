@@ -86,6 +86,9 @@ export class FeaturesApi {
 
     /**
      * Maakt een nieuwe feature aan (gebouw of weg).
+     * 
+     * PR1: buildingId wordt niet meer meegestuurd - de database genereert de UUID.
+     * De response bevat de door de database gegenereerde buildingId.
      */
     async create(feature) {
         console.log('FeaturesApi: Nieuwe feature aanmaken', feature);
@@ -105,9 +108,9 @@ export class FeaturesApi {
 
             const url = `${this.baseUrl}/api/buildings/building`;
             
+            // PR1: buildingId verwijderd - database genereert de UUID
             const body = {
-                buildingId: feature.id,
-                name: feature.meta.name || `Gebouw ${feature.id.substring(0, 4)}`,
+                name: feature.meta.name || `Gebouw`,
                 description: feature.meta.description || 'Nieuw getekend gebouw',
                 buildingType: feature.meta.typeId ? { buildingTypeId: feature.meta.typeId } : null,
                 height: feature.height,
@@ -124,7 +127,23 @@ export class FeaturesApi {
             
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             const data = await response.json();
-            return data;
+            
+            // PR1: Retourneer genormaliseerde feature met database-gegenereerde UUID
+            return {
+                id: data.buildingId,  // Database-gegenereerde UUID
+                featureType: feature.featureType,
+                height: data.height,
+                width: feature.width,
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [data.polygon.coordinates.map(c => [c.x, c.y])]
+                },
+                meta: { 
+                    ...feature.meta, 
+                    name: data.name, 
+                    description: data.description 
+                }
+            };
         } catch (error) {
             console.error('FeaturesApi.create faalde:', error);
             throw error;
