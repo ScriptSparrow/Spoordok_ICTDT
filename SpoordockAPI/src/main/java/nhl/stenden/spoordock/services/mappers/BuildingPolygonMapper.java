@@ -38,7 +38,7 @@ public class BuildingPolygonMapper implements Mapper<BuildingPolygonDTO, Buildin
             dto.getBuildingId(),
             dto.getName(), 
             dto.getDescription(),
-            dto.getBuildingType() != null ? buildingTypeMapper.toEntity(dto.getBuildingType()) : null,
+            null, // Koppeling met gebouwtype wordt nu in de BuildingService gedaan om validatiefouten te voorkomen
             polygonMapper.toEntity(dto.getPolygon()),
             dto.getHeight()
         );
