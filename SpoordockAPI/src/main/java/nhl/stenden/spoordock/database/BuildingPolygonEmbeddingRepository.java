@@ -11,7 +11,7 @@ public interface BuildingPolygonEmbeddingRepository extends ListCrudRepository<B
 
     @Query(
         value = """
-            select * from building_polygon_embeddings bpe
+            select * from polygon_embeddings bpe
             where bpe.embedding is not null
             order by bpe.embedding <-> :query
             limit :limit
@@ -21,8 +21,8 @@ public interface BuildingPolygonEmbeddingRepository extends ListCrudRepository<B
 
     @Query(
         value =  """
-            select bpe.* from building_polygon_embeddings bpe
-            join polygones p on bpe.building_id = p.id
+            select bpe.* from polygon_embeddings bpe
+            join polygones p on bpe.polygon_id = p.id
             where ST_Within(p.punten, :zone)
               and bpe.embedding is not null
             order by bpe.embedding <-> :query
