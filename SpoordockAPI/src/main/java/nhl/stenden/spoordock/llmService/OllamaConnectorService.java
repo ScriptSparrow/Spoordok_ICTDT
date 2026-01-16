@@ -15,15 +15,12 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.springframework.stereotype.Component;
-import org.springframework.util.StopWatch;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import nhl.stenden.spoordock.llmService.ToolHandling.ToolHandlingManager;
 import nhl.stenden.spoordock.llmService.configuration.LlmConfiguration;
 import nhl.stenden.spoordock.llmService.configuration.LlmConfiguration.ModelConfig;
-import nhl.stenden.spoordock.llmService.dtos.EmbeddingRequestBody;
-import nhl.stenden.spoordock.llmService.dtos.EmbeddingResponseBody;
 import nhl.stenden.spoordock.llmService.dtos.Options;
 import nhl.stenden.spoordock.llmService.dtos.ChatResponse.Message;
 import nhl.stenden.spoordock.llmService.dtos.parameters.ToolRequest.ToolRequest;
@@ -42,7 +39,7 @@ import nhl.stenden.spoordock.llmService.historyManager.classes.UserMessage;
 @Component
 public class OllamaConnectorService {
 
-    private static final String EMBEDDING_MODEL_NAME = "nomic-embed-text";
+    
     
     private final HttpClient httpClient;
     private final URI baseUrl;
@@ -70,53 +67,6 @@ public class OllamaConnectorService {
             modelConfigs.put(modelConfig.getName(), modelConfig);
         }
 
-    }
-
-    /**
-     * Returns the name of the embedding model used for creating text embeddings.
-     *
-     * @return the embedding model name
-     */
-    public String getEmbeddingModelName() {
-        return EMBEDDING_MODEL_NAME;
-    }
-
-    /**
-     * Creates a vector embedding for the given text using the Ollama embedding API.
-     *
-     * @param text the text to create an embedding for
-     * @return a float array representing the text embedding vector
-     * @throws RuntimeException if the embedding creation fails
-     */
-    public float[] createEmbedding(String text) {
-        try{
-            var body = new EmbeddingRequestBody(EMBEDDING_MODEL_NAME, text);
-
-            HttpRequest request = HttpRequest.newBuilder()
-                .uri(baseUrl.resolve("/api/embed"))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
-                .build();
-
-            StopWatch sw = new StopWatch();
-            sw.start();
-            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            
-            if (response.statusCode() != 200) {
-
-                throw new RuntimeException("Failed to create embedding. Status code: " + response.statusCode() + ", Body: " + response.body());
-            }
-
-            sw.stop();
-            log.info("Embedding creation took: " + sw.getTotalTimeMillis() + " ms");
-
-            EmbeddingResponseBody responseBody = objectMapper.readValue(response.body(), EmbeddingResponseBody.class);
-            return responseBody.getEmbedding()[0];
-        }
-        catch(Exception ex)
-        {
-            throw new RuntimeException("Failed to create embedding", ex);
-        }
     }
 
     /**
