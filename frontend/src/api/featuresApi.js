@@ -28,14 +28,26 @@ export class FeaturesApi {
             // Gebouwen even omzetten naar ons eigen formaatje
             const normalizedBuildings = buildings.map(b => ({
                 id: b.buildingId,
-                featureType: b.buildingType?.name?.toLowerCase() || 'housing',
+                featureType: b.buildingType?.labelName?.toLowerCase() || 'housing',
                 height: b.height,
                 width: 0,
                 geometry: {
                     type: 'Polygon',
                     coordinates: [b.polygon.coordinates.map(c => [c.x, c.y])]
                 },
-                meta: { name: b.name, description: b.description, typeId: b.buildingType?.buildingTypeId }
+                meta: { 
+                    name: b.name, 
+                    description: b.description, 
+                    typeId: b.buildingType?.buildingTypeId,
+                    typeLabel: b.buildingType?.labelName,
+                    typeDescription: b.buildingType?.description,
+                    costPerUnit: b.buildingType?.costPerUnit,
+                    unit: b.buildingType?.unit,
+                    residentsPerUnit: b.buildingType?.residentsPerUnit,
+                    points: b.buildingType?.points,
+                    inhabitable: b.buildingType?.inhabitable,
+                    color: b.buildingType?.color
+                }
             }));
 
             // Wegen ook even gladstrijken
@@ -55,6 +67,20 @@ export class FeaturesApi {
         } catch (error) {
             console.error('FeaturesApi.getAll ging mis:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Haalt alle gebouwtypes op uit de backend.
+     */
+    async getBuildingTypes() {
+        if (this.useLocal) return [];
+        try {
+            const response = await fetch(`${this.baseUrl}/api/building/types/list`);
+            return response.ok ? await response.json() : [];
+        } catch (error) {
+            console.error('FeaturesApi.getBuildingTypes faalde:', error);
+            return [];
         }
     }
 
@@ -169,7 +195,7 @@ export class FeaturesApi {
                 return true;
             }
 
-            const url = `/api/buildings/building/${id}`;
+            const url = `${this.baseUrl}/api/buildings/building/${id}`;
             const response = await fetch(url, {
                 method: 'DELETE'
             });
