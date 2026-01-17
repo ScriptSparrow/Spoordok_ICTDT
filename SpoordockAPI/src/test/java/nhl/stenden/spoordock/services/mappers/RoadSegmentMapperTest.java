@@ -1,6 +1,6 @@
 package nhl.stenden.spoordock.services.mappers;
 
-import nhl.stenden.spoordock.controllers.dtos.RoadSegementDTO;
+import nhl.stenden.spoordock.controllers.dtos.RoadSegmentDTO;
 import nhl.stenden.spoordock.controllers.dtos.RoadTypeDTO;
 import nhl.stenden.spoordock.controllers.dtos.common.Coordinate;
 import nhl.stenden.spoordock.database.entities.RoadSegment;
@@ -51,7 +51,7 @@ class RoadSegmentMapperTest {
         when(lineStringMapper.toDTO(roadPoints)).thenReturn(expectedCoordinates);
 
         // Act
-        RoadSegementDTO dto = roadSegmentMapper.toDTO(entity);
+        RoadSegmentDTO dto = roadSegmentMapper.toDTO(entity);
 
         // Assert
         assertNotNull(dto);
@@ -74,7 +74,7 @@ class RoadSegmentMapperTest {
         RoadTypeDTO roadTypeDTO = mock(RoadTypeDTO.class);
         List<Coordinate> coordinates = List.of(mock(Coordinate.class));
 
-        RoadSegementDTO dto = mock(RoadSegementDTO.class);
+        RoadSegmentDTO dto = mock(RoadSegmentDTO.class);
         when(dto.getId()).thenReturn(id);
         when(dto.getRoadType()).thenReturn(roadTypeDTO);
         when(dto.getRoadDescription()).thenReturn(description);
@@ -110,14 +110,14 @@ class RoadSegmentMapperTest {
         // We spy so we can verify it calls toDTO() internally
         RoadSegmentMapper spyMapper = spy(new RoadSegmentMapper(roadTypeMapper, lineStringMapper));
 
-        RoadSegementDTO d1 = mock(RoadSegementDTO.class);
-        RoadSegementDTO d2 = mock(RoadSegementDTO.class);
+        RoadSegmentDTO d1 = mock(RoadSegmentDTO.class);
+        RoadSegmentDTO d2 = mock(RoadSegmentDTO.class);
 
         doReturn(d1).when(spyMapper).toDTO(r1);
         doReturn(d2).when(spyMapper).toDTO(r2);
 
         // Act
-        List<RoadSegementDTO> result = spyMapper.toDTOs(List.of(r1, r2));
+        List<RoadSegmentDTO> result = spyMapper.toDTOs(List.of(r1, r2));
 
         // Assert
         assertEquals(List.of(d1, d2), result);
@@ -128,8 +128,8 @@ class RoadSegmentMapperTest {
     @Test
     void toEntities_mapsList_usingToEntity() {
         // Arrange
-        RoadSegementDTO d1 = mock(RoadSegementDTO.class);
-        RoadSegementDTO d2 = mock(RoadSegementDTO.class);
+        RoadSegmentDTO d1 = mock(RoadSegmentDTO.class);
+        RoadSegmentDTO d2 = mock(RoadSegmentDTO.class);
 
         RoadSegmentMapper spyMapper = spy(new RoadSegmentMapper(roadTypeMapper, lineStringMapper));
 
