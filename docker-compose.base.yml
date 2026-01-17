@@ -6,11 +6,7 @@
 x-common-variables: &common-variables
   DB_NAME: ${DB_NAME:-mydatabase}
   DB_USERNAME: ${DB_USERNAME:-myuser}
-  DB_PASSWORD: ${DB_PASSWORD:-mysecretpassword}
-  # Add these lines to ensure Postgres container gets them too:
-  POSTGRES_DB: ${DB_NAME:-mydatabase}
-  POSTGRES_USER: ${DB_USERNAME:-myuser}
-  POSTGRES_PASSWORD: ${DB_PASSWORD:-mysecretpassword}
+  DB_PASSWORD: ${DB_PASSWORD:-mypassword}
   DATABASE_URL: jdbc:postgresql://db:5432/${DB_NAME:-mydatabase}
   API_URL: http://spoordock_api:6001
 
@@ -38,6 +34,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+        restart: true
+        required: true
     networks:
       - spoordok_network
 

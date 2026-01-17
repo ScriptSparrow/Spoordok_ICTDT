@@ -24,12 +24,8 @@ services:
       - "6001:6001"
       - "5005:5005"  # JDWP debug port
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:6001/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:6001/health" ]
       interval: 3s
       timeout: 2s
       start_period: 30s
-#      test: ["CMD-SHELL", "wget -q --spider http://localhost:6001/health || exit 1"]
-#      interval: 5s
-#      timeout: 5s
-#      start_period: 60s
-#      retries: 5
+      retries: 5

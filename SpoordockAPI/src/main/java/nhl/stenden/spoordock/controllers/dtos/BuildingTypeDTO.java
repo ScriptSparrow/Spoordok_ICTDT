@@ -26,7 +26,7 @@ public class BuildingTypeDTO {
     private String unit;
 
     //Cost per unit
-    private double costPerUnit;
+    private String costPerUnit;
 
     // Is the building inhabitable
     private boolean inhabitable;
@@ -35,7 +35,7 @@ public class BuildingTypeDTO {
     private Double residentsPerUnit;
 
     // points awarded for building this type per unit
-    private Integer points;    
+    private int points;    
 
     // Color representation in the frontend in hex format
     private String color;

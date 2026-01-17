@@ -19,13 +19,7 @@ public class RoadSegment {
     @Setter(AccessLevel.PRIVATE)
     private UUID id;     // ook een UUID?
 
-    // Omschrijving van het wegsegment (optioneel)
-    @Column(name = "omschrijving", length = 450)
-    private String roadDescription;
-
-    // Breedte van het wegsegment in meters
-    @Column(name = "breedte", nullable = false)
-    private int width;
+    private String roadDescription; // is deze nodig?
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "wegtype")
@@ -36,11 +30,10 @@ public class RoadSegment {
 
     public RoadSegment() {}
 
-    public RoadSegment(UUID id, RoadTypeTemplate roadTypeTemplate, String roadDescription, int width, LineString roadPoints) {
+    public RoadSegment(UUID id, RoadTypeTemplate roadTypeTemplate, String roadDescription, LineString roadPoints) {
         this.id = id;
         this.roadTypeTemplate = roadTypeTemplate;
         this.roadDescription = roadDescription;
-        this.width = width;
         this.roadPoints = roadPoints;
     }
 }

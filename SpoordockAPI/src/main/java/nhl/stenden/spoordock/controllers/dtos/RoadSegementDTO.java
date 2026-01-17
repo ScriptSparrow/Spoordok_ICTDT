@@ -15,20 +15,16 @@ public class RoadSegementDTO {
     private UUID id;
     @NotNull
     private RoadTypeDTO roadType;
-    
+    @NotNull
     private String roadDescription;
-    
-    // Breedte van het wegsegment in meters
-    private int width;
-    
     @NotNull
     private List<Coordinate> coordinates;
 
-    public RoadSegementDTO(UUID id, RoadTypeDTO roadType, String roadDescription, int width, List<Coordinate> coordinates) {
+    public RoadSegementDTO(UUID id, RoadTypeDTO roadType, String roadDescription, List<Coordinate> coordinates) {
         this.id = id;
         this.roadType = roadType;
         this.roadDescription = roadDescription;
-        this.width = width;
         this.coordinates = coordinates;
     }
+
 }

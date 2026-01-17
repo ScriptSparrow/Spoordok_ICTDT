@@ -35,7 +35,7 @@ public class BuildingTypeEntity {
     private String unit;
 
     @Column(name = "kosten_per_eenheid")
-    private double costPerUnit;
+    private String costPerUnit;
 
     @Column(name = "bewoonbaar")
     private boolean inhabitable;
@@ -44,7 +44,7 @@ public class BuildingTypeEntity {
     private Double residentsPerUnit;
 
     @Column(name = "punten_per_eenheid")
-    private Integer points;
+    private int points;
 
     @Column(name = "kleur")
     private String color;
