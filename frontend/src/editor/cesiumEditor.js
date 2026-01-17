@@ -271,15 +271,6 @@ export class CesiumEditor {
         
         // Fix: Als we een weg tekenen, moet het type altijd 'road' zijn
         if (this.mode === 'DRAW_ROAD') {
-<<<<<<< HEAD
-=======
-        let type = selectType ? selectType.value : (currentMode === 'DRAW' ? 'housing' : 'road');
-        
-        // Fix: Als we een weg tekenen, moet het type altijd 'road' zijn
-        if (currentMode === 'DRAW_ROAD') {
->>>>>>> refs/rewritten/merged-main
-=======
->>>>>>> 332b965 (merged main)
             type = 'road';
         }
         
@@ -309,25 +300,6 @@ export class CesiumEditor {
         }
 
         // Voor polygonen: toon de beschrijving modal
-<<<<<<< HEAD
-=======
-        
-        // Koppel het juiste buildingTypeId uit de database mapping
-        const buildingType = this.buildingTypes.find(t => t.labelName.toLowerCase() === type);
-        if (buildingType) {
-            feature.meta.typeId = buildingType.buildingTypeId;
-            feature.meta.typeLabel = buildingType.labelName;
-            feature.meta.costPerUnit = buildingType.costPerUnit;
-            feature.meta.unit = buildingType.unit;
-            feature.meta.residentsPerUnit = buildingType.residentsPerUnit;
-            feature.meta.points = buildingType.points;
-            feature.meta.inhabitable = buildingType.inhabitable;
-        }
-
-        // Metadata toevoegen zodat de backend niet gaat zeuren over @NotNull
->>>>>>> refs/rewritten/merged-main
-=======
->>>>>>> 332b965 (merged main)
         if (geomType === 'Polygon') {
             // Standaard naam genereren (deze moet verplicht gewijzigd worden)
             const defaultName = `Gebouw ${feature.id.substring(0, 4)}`;
@@ -390,26 +362,6 @@ export class CesiumEditor {
             return selectElement.selectedOptions[0].textContent || selectElement.value;
         }
         return 'Onbekend';
-<<<<<<< HEAD
-=======
-
-        try {
-            await this.execute({
-                type: 'CREATE',
-                feature: feature
-            });
-
-            // Selecteer em meteen even voor de feedback
-            setTimeout(() => this.selectFeature(feature.id), 100);
-
-            if (this.onMessage) this.onMessage('Feature succesvol opgeslagen!', 'success');
-        } catch (err) {
-            console.error('CesiumEditor: Opslaan mislukt', err);
-            if (this.onMessage) this.onMessage('Opslaan mislukt. Controleer de console voor details.', 'error');
-        }
->>>>>>> refs/rewritten/merged-main
-=======
->>>>>>> 332b965 (merged main)
     }
 
     /**
@@ -477,18 +429,6 @@ export class CesiumEditor {
         // Haal kleur uit feature meta (database) of val terug op TYPE_COLORS voor wegen
         const colorHex = feature.meta?.color || TYPE_COLORS[feature.featureType]?.toCssHexString() || '#ffffff';
         const baseColor = Color.fromCssColorString(colorHex);
-<<<<<<< HEAD
-=======
-        // Gebruik kleur uit database als beschikbaar, anders fallback naar TYPE_COLORS
-        let baseColor;
-        if (feature.meta && feature.meta.color) {
-            baseColor = Color.fromCssColorString(feature.meta.color);
-        } else {
-            baseColor = TYPE_COLORS[feature.featureType] || Color.WHITE;
-        }
->>>>>>> refs/rewritten/merged-main
-=======
->>>>>>> 332b965 (merged main)
         const color = highlighted ? baseColor.withAlpha(0.9) : baseColor.withAlpha(0.6);
 
         if (entity.polygon) {
@@ -548,36 +488,6 @@ export class CesiumEditor {
             oldFeature: oldFeature,
             newFeature: newFeature
         }, false); // lokale updates en API call zijn al gedaan hierboven
-<<<<<<< HEAD
-=======
-        try {
-            // We passen de wijziging toe via execute -> apply
-            await this.execute({
-                type: 'UPDATE',
-                id: this.selectedId,
-                oldFeature: oldFeature,
-                newFeature: newFeature
-            });
-
-            // Update de UI (zijbalk) omdat de meta-data veranderd kan zijn
-            if (this.onSelectionChange) {
-                this.onSelectionChange(newFeature);
-            }
-            
-            console.log('CesiumEditor: Feature succesvol bijgewerkt');
-        } catch (err) {
-            console.error('CesiumEditor: Updaten mislukt', err);
-            if (this.onMessage) this.onMessage('Aanpassen mislukt. Controleer de console.', 'error');
-            
-            // Zet de UI terug naar de oude staat
-            this.syncEntity(oldFeature);
-            if (this.onSelectionChange) {
-                this.onSelectionChange(oldFeature);
-            }
-        }
->>>>>>> refs/rewritten/merged-main
-=======
->>>>>>> 332b965 (merged main)
     }
 
     /**
@@ -618,21 +528,6 @@ export class CesiumEditor {
         // Haal kleur uit feature meta (database) of val terug op TYPE_COLORS voor wegen
         const colorHex = feature.meta?.color || TYPE_COLORS[feature.featureType]?.toCssHexString() || '#ffffff';
         const color = Color.fromCssColorString(colorHex);
-<<<<<<< HEAD
-=======
-        // Gebruik de kleur uit de database (meta.color) als die beschikbaar is
-        // Anders fallback naar de hardcoded TYPE_COLORS mapping of wit
-        let color;
-        if (feature.meta && feature.meta.color) {
-            // Kleur uit database (hex string zoals "#f97316")
-            color = Color.fromCssColorString(feature.meta.color);
-        } else {
-            // Fallback naar de hardcoded TYPE_COLORS mapping
-            color = TYPE_COLORS[feature.featureType] || Color.WHITE;
-        }
->>>>>>> refs/rewritten/merged-main
-=======
->>>>>>> 332b965 (merged main)
 
         if (feature.geometry.type === 'Polygon') {
             const flattened = feature.geometry.coordinates[0].reduce((acc, val) => acc.concat(val), []);

@@ -28,13 +28,7 @@ export class FeaturesApi {
             // Gebouwen even omzetten naar ons eigen formaatje
             const normalizedBuildings = buildings.map(b => ({
                 id: b.buildingId,
-                featureType: b.buildingType?.buildingTypeId || null,
-<<<<<<< HEAD
-=======
-                featureType: b.buildingType?.labelName?.toLowerCase() || 'housing',
->>>>>>> refs/rewritten/merged-main
-=======
->>>>>>> 332b965 (merged main)
+                featureType: b.buildingType?.buildingTypeId || null,  // UUID gebruiken i.p.v. naam
                 height: b.height,
                 width: 0,
                 geometry: {
@@ -45,20 +39,7 @@ export class FeaturesApi {
                     name: b.name, 
                     description: b.description, 
                     typeId: b.buildingType?.buildingTypeId,
-                    color: b.buildingType?.color || '#ffffff'  // Kleur uit de database
-<<<<<<< HEAD
-=======
-                    typeLabel: b.buildingType?.labelName,
-                    typeDescription: b.buildingType?.description,
-                    costPerUnit: b.buildingType?.costPerUnit,
-                    unit: b.buildingType?.unit,
-                    residentsPerUnit: b.buildingType?.residentsPerUnit,
-                    points: b.buildingType?.points,
-                    inhabitable: b.buildingType?.inhabitable,
-                    color: b.buildingType?.color
->>>>>>> refs/rewritten/merged-main
-=======
->>>>>>> 332b965 (merged main)
+                    color: b.buildingType?.color || '#ffffff'  // Kleur uit database toevoegen
                 }
             }));
 
@@ -83,24 +64,7 @@ export class FeaturesApi {
     }
 
     /**
-     * Haalt alle gebouwtypes op uit de backend.
-     */
-    async getBuildingTypes() {
-        if (this.useLocal) return [];
-        try {
-            const response = await fetch(`${this.baseUrl}/api/building/types/list`);
-            return response.ok ? await response.json() : [];
-        } catch (error) {
-            console.error('FeaturesApi.getBuildingTypes faalde:', error);
-            return [];
-        }
-    }
-
-    /**
      * Maakt een nieuwe feature aan (gebouw of weg).
-     * 
-     * PR1: buildingId wordt niet meer meegestuurd - de database genereert de UUID.
-     * De response bevat de door de database gegenereerde buildingId.
      */
     async create(feature) {
         console.log('FeaturesApi: Nieuwe feature aanmaken', feature);
@@ -120,15 +84,8 @@ export class FeaturesApi {
 
             const url = `${this.baseUrl}/api/buildings/building`;
             
-            // PR1: buildingId verwijderd - database genereert de UUID
             const body = {
                 name: feature.meta.name || `Gebouw ${feature.id.substring(0, 4)}`,
-<<<<<<< HEAD
-=======
-                name: feature.meta.name || `Gebouw`,
->>>>>>> refs/rewritten/merged-main
-=======
->>>>>>> 332b965 (merged main)
                 description: feature.meta.description || 'Nieuw getekend gebouw',
                 buildingType: feature.meta.typeId ? { buildingTypeId: feature.meta.typeId } : null,
                 height: feature.height,
@@ -145,23 +102,7 @@ export class FeaturesApi {
             
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             const data = await response.json();
-            
-            // PR1: Retourneer genormaliseerde feature met database-gegenereerde UUID
-            return {
-                id: data.buildingId,  // Database-gegenereerde UUID
-                featureType: feature.featureType,
-                height: data.height,
-                width: feature.width,
-                geometry: {
-                    type: 'Polygon',
-                    coordinates: [data.polygon.coordinates.map(c => [c.x, c.y])]
-                },
-                meta: { 
-                    ...feature.meta, 
-                    name: data.name, 
-                    description: data.description 
-                }
-            };
+            return data;
         } catch (error) {
             console.error('FeaturesApi.create faalde:', error);
             throw error;
@@ -232,7 +173,7 @@ export class FeaturesApi {
                 return true;
             }
 
-            const url = `${this.baseUrl}/api/buildings/building/${id}`;
+            const url = `/api/buildings/building/${id}`;
             const response = await fetch(url, {
                 method: 'DELETE'
             });
