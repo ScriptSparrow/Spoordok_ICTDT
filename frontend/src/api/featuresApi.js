@@ -28,11 +28,13 @@ export class FeaturesApi {
             // Gebouwen even omzetten naar ons eigen formaatje
             const normalizedBuildings = buildings.map(b => ({
                 id: b.buildingId,
-<<<<<<< HEAD
                 featureType: b.buildingType?.buildingTypeId || null,
+<<<<<<< HEAD
 =======
                 featureType: b.buildingType?.labelName?.toLowerCase() || 'housing',
 >>>>>>> refs/rewritten/merged-main
+=======
+>>>>>>> 332b965 (merged main)
                 height: b.height,
                 width: 0,
                 geometry: {
@@ -43,8 +45,8 @@ export class FeaturesApi {
                     name: b.name, 
                     description: b.description, 
                     typeId: b.buildingType?.buildingTypeId,
-<<<<<<< HEAD
                     color: b.buildingType?.color || '#ffffff'  // Kleur uit de database
+<<<<<<< HEAD
 =======
                     typeLabel: b.buildingType?.labelName,
                     typeDescription: b.buildingType?.description,
@@ -55,6 +57,8 @@ export class FeaturesApi {
                     inhabitable: b.buildingType?.inhabitable,
                     color: b.buildingType?.color
 >>>>>>> refs/rewritten/merged-main
+=======
+>>>>>>> 332b965 (merged main)
                 }
             }));
 
@@ -118,11 +122,13 @@ export class FeaturesApi {
             
             // PR1: buildingId verwijderd - database genereert de UUID
             const body = {
-<<<<<<< HEAD
                 name: feature.meta.name || `Gebouw ${feature.id.substring(0, 4)}`,
+<<<<<<< HEAD
 =======
                 name: feature.meta.name || `Gebouw`,
 >>>>>>> refs/rewritten/merged-main
+=======
+>>>>>>> 332b965 (merged main)
                 description: feature.meta.description || 'Nieuw getekend gebouw',
                 buildingType: feature.meta.typeId ? { buildingTypeId: feature.meta.typeId } : null,
                 height: feature.height,

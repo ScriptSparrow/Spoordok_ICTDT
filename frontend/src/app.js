@@ -180,7 +180,6 @@ function updateUI(selected) {
 
     if (selected) {
         const isPoly = selected.geometry.type === 'Polygon';
-<<<<<<< HEAD
         
         // Basis info HTML
         let html = `
@@ -190,6 +189,7 @@ function updateUI(selected) {
                 <p><span class="label">Functie:</span> <span class="value">${getBuildingTypeName(selected.featureType)}</span></p>
                 <p><span class="label">${isPoly ? 'Hoogte' : 'Breedte'}:</span> <span class="value">${isPoly ? selected.height : selected.width}m</span></p>
         `;
+<<<<<<< HEAD
 =======
         const meta = selected.meta || {};
         
@@ -220,6 +220,8 @@ function updateUI(selected) {
             `;
         }
 >>>>>>> refs/rewritten/merged-main
+=======
+>>>>>>> 332b965 (merged main)
         
         // Voor polygonen: toon naam, omschrijving en bewerkknop
         if (isPoly) {
