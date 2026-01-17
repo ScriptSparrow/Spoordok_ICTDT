@@ -24,7 +24,6 @@ import org.mockito.MockitoAnnotations;
 
 import nhl.stenden.spoordock.llmService.ToolHandling.ToolHandlingManager;
 import nhl.stenden.spoordock.llmService.configuration.LlmConfiguration;
-import nhl.stenden.spoordock.llmService.configuration.LlmConfiguration.ModelConfig;
 import nhl.stenden.spoordock.llmService.historyManager.IChatHistoryManager;
 import nhl.stenden.spoordock.llmService.historyManager.classes.BotMessage;
 import nhl.stenden.spoordock.llmService.historyManager.classes.OllamaMessage;
@@ -36,22 +35,11 @@ public class OllamaConnectorServiceTest {
 
     String baseUrl = "http://someurl.com";
     String defaultModel = "defaultModel";
-    int defaultModelContextLength = 4000;
-    String overrideModel = "overrideModel";
-    int overrideModelContextLength = 8000;
-
-    List<ModelConfig> config = new ArrayList<ModelConfig>(){
-        {
-            add(new ModelConfig(){{ setName(defaultModel); setContextLength(defaultModelContextLength);} });
-            add(new ModelConfig(){{ setName(overrideModel); setContextLength(overrideModelContextLength); }});
-        }
-    };
 
     private LlmConfiguration llmConfig = new LlmConfiguration(){
         {
             setBaseUrl(baseUrl);
             setDefaultModel(defaultModel);
-            setModels(config);
             setSystemPrompts(new SystemPrompts(){
                 {
                     setDefaultChatPrompt("Default Chat prompt");
@@ -108,6 +96,43 @@ public class OllamaConnectorServiceTest {
     }
 
     @Test
+    void getAvailableModels_returnsListOfModels() throws Exception {
+        String mockModelsResponse = """
+            {"models":[{"name":"model1"},{"name":"model2"}]}
+            """;
+        
+        HttpResponse<String> modelsHttpResponse = mock(HttpResponse.class);
+        when(modelsHttpResponse.statusCode()).thenReturn(200);
+        when(modelsHttpResponse.body()).thenReturn(mockModelsResponse);
+        
+        when(httpClient.<String>send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
+            .thenReturn(modelsHttpResponse);
+        
+        List<String> models = testingService.getAvailableModels();
+        
+        assertNotNull(models);
+        assertEquals(2, models.size());
+        assertTrue(models.contains("model1"));
+        assertTrue(models.contains("model2"));
+    }
+
+    @Test
+    void getAvailableModels_httpError_throwsException() throws Exception {
+        HttpResponse<String> errorResponse = mock(HttpResponse.class);
+        when(errorResponse.statusCode()).thenReturn(500);
+        when(errorResponse.body()).thenReturn("Internal Server Error");
+        
+        when(httpClient.<String>send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
+            .thenReturn(errorResponse);
+        
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            testingService.getAvailableModels();
+        });
+        
+        assertTrue(exception.getMessage().contains("Failed to get available models"));
+    }
+
+    @Test
     void createHistory_calledWithNewId() throws Exception {
         UUID id = UUID.randomUUID();
 
@@ -122,6 +147,7 @@ public class OllamaConnectorServiceTest {
         
         assertEquals(id, uuidCaptor.getValue());
         assertTrue(messageCaptor.getValue() instanceof SystemMessage);
+        assertEquals("Default Chat prompt", ((SystemMessage)messageCaptor.getValue()).getContent());
     }
 
     @Test
@@ -138,7 +164,9 @@ public class OllamaConnectorServiceTest {
         verify(historyManager, atLeastOnce()).addMessageToHistory(eq(id), messageCaptor.capture());
         
         List<OllamaMessage> capturedMessages = messageCaptor.getAllValues();
-        assertTrue(capturedMessages.stream().anyMatch(msg -> msg instanceof UserMessage));
+        assertTrue(capturedMessages.stream().anyMatch(msg -> 
+            msg instanceof UserMessage && ((UserMessage)msg).getContent().equals(userPrompt)
+        ));
     }
 
     @Test
@@ -182,18 +210,6 @@ public class OllamaConnectorServiceTest {
         
         SystemMessage systemMessage = (SystemMessage) messageCaptor.getValue();
         assertEquals("Description helper prompt", systemMessage.getContent());
-    }
-
-    @Test
-    void startChatWithToolsStream_invalidModel_throwsException() {
-        UUID id = UUID.randomUUID();
-        String invalidModel = "nonExistentModel";
-        
-        Consumer<ChunkReceivedEventArgs> chunkConsumer = (chunk) -> {};
-
-        assertThrows(RuntimeException.class, () -> {
-            testingService.startChatWithToolsStream(id, "test prompt", invalidModel, chunkConsumer);
-        });
     }
 
     @Test
@@ -393,5 +409,30 @@ public class OllamaConnectorServiceTest {
         HttpRequest capturedRequest = requestCaptor.getValue();
         assertTrue(capturedRequest.uri().toString().endsWith("/api/chat"));
         assertTrue(capturedRequest.headers().firstValue("Content-Type").orElse("").equals("application/json"));
+    }
+
+    @Test
+    void startChatWithToolsStream_addsToolMessageToHistory() throws Exception {
+        UUID id = UUID.randomUUID();
+        
+        String mockResponseWithTools = """
+            {"model":"defaultModel","created_at":"2023-12-15T10:00:00Z","message":{"role":"assistant","content":"Using tool","tool_calls":[{"function":{"name":"myTool","arguments":{}}}]},"done":true}
+            """;
+        
+        InputStream mockInputStream = new ByteArrayInputStream(mockResponseWithTools.getBytes());
+        when(httpResponse.body()).thenReturn(mockInputStream);
+        
+        when(toolHandlingManager.getAvailableTools()).thenReturn(List.of());
+        when(toolHandlingManager.handleToolInvocation(any())).thenReturn("tool result");
+        
+        Consumer<ChunkReceivedEventArgs> chunkConsumer = (chunk) -> {};
+
+        testingService.startChatWithToolsStream(id, "test prompt", defaultModel, chunkConsumer);
+        
+        ArgumentCaptor<OllamaMessage> messageCaptor = ArgumentCaptor.forClass(OllamaMessage.class);
+        verify(historyManager, atLeastOnce()).addMessageToHistory(eq(id), messageCaptor.capture());
+        
+        List<OllamaMessage> capturedMessages = messageCaptor.getAllValues();
+        assertTrue(capturedMessages.stream().anyMatch(msg -> msg instanceof ToolMessage));
     }
 }

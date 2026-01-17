@@ -8,9 +8,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -20,9 +18,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import nhl.stenden.spoordock.llmService.ToolHandling.ToolHandlingManager;
 import nhl.stenden.spoordock.llmService.configuration.LlmConfiguration;
-import nhl.stenden.spoordock.llmService.configuration.LlmConfiguration.ModelConfig;
 import nhl.stenden.spoordock.llmService.dtos.Options;
 import nhl.stenden.spoordock.llmService.dtos.ChatResponse.Message;
+import nhl.stenden.spoordock.llmService.dtos.ListModelsResponse;
 import nhl.stenden.spoordock.llmService.dtos.parameters.ToolRequest.ToolRequest;
 import nhl.stenden.spoordock.llmService.dtos.parameters.toolCall.FunctionCall;
 import nhl.stenden.spoordock.llmService.dtos.parameters.toolCall.ToolCall;
@@ -43,7 +41,6 @@ public class OllamaConnectorService {
     
     private final HttpClient httpClient;
     private final URI baseUrl;
-    private final Map<String, LlmConfiguration.ModelConfig> modelConfigs = new HashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final IChatHistoryManager historyManager;
     private final LlmConfiguration.SystemPrompts systemPrompts;
@@ -62,11 +59,30 @@ public class OllamaConnectorService {
         this.systemPrompts = configuration.getSystemPrompts();
         this.toolhandlingManager = toolHandlingManager;
         this.httpClient = httpClient;
+    }
 
-        for (LlmConfiguration.ModelConfig modelConfig : configuration.getModels()) {
-            modelConfigs.put(modelConfig.getName(), modelConfig);
+    public List<String> getAvailableModels() {
+
+        try {
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(baseUrl.resolve("/api/tags"))
+                    .header("Content-Type", "application/json")
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) {
+                throw new RuntimeException("Failed to get available models. Status code: " + response.statusCode() + ", Body: " + response.body());
+            }
+            ListModelsResponse modelsResponse = objectMapper.readValue(response.body(), ListModelsResponse.class);
+            return modelsResponse.getModels().stream()
+                .map(ListModelsResponse.Model::getName)
+                .toList();  
+        
+        }catch(Exception ex)
+        {
+            throw new RuntimeException("Failed to get available models", ex);
         }
-
     }
 
     /**
@@ -112,12 +128,8 @@ public class OllamaConnectorService {
                 tools = toolhandlingManager.getAvailableTools();
             }
 
-            ModelConfig modelConfig = modelConfigs.get(model);
-            if (modelConfig == null) {
-                throw new IllegalArgumentException("Model '" + model + "' is not configured.");
-            }
 
-            Options options = new Options(modelConfig.getContextLength());
+            Options options = new Options(10000);
 
             int loop = 0;
             boolean continueConversation = true;

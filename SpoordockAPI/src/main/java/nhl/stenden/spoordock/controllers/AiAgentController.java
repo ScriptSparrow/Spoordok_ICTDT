@@ -38,12 +38,22 @@ public class AiAgentController {
 
     @GetMapping("models")
     public ResponseEntity<?> getAvailableModels() {
-        return ResponseEntity.ok(
-            Map.of(
-                "availableModels", llmConfiguration.getModels().stream().map(m -> m.getName()).toList(),
-                "defaultModel", llmConfiguration.getDefaultModel()
-            )
-        );
+        try{
+            var availableModels = ollamaConnectorService.getAvailableModels();
+             return ResponseEntity.ok(
+                Map.of(
+                    "availableModels", availableModels,
+                    "defaultModel", llmConfiguration.getDefaultModel()
+                )
+            );
+        } catch(Exception ex)
+        {
+            return ResponseEntity
+                .internalServerError()
+                .body("Failed to retrieve available models: " + ex.getMessage());
+        }
+
+       
     }
 
     @PostMapping("chat/{id}")
@@ -59,10 +69,11 @@ public class AiAgentController {
             ? llmConfiguration.getDefaultModel() 
             : model;
 
-        if (!llmConfiguration.getModels().stream().anyMatch(m -> m.getName().equals(selectedModel))) {
+        var availableModels = ollamaConnectorService.getAvailableModels();
+        if (!availableModels.stream().anyMatch(m -> m.equals(selectedModel))) {
             return ResponseEntity
                 .badRequest()
-                .body("Model '" + selectedModel + "' is not available. Available models: " + llmConfiguration.getModels());
+                .body("Model '" + selectedModel + "' is not available. Available models: " + availableModels);
         }
 
         final String message = chatRequest.getMessage();
