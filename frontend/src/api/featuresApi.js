@@ -28,7 +28,7 @@ export class FeaturesApi {
             // Gebouwen even omzetten naar ons eigen formaatje
             const normalizedBuildings = buildings.map(b => ({
                 id: b.buildingId,
-                featureType: b.buildingType?.labelName?.toLowerCase() || 'housing',
+                featureType: b.buildingType?.buildingTypeId || null,
                 height: b.height,
                 width: 0,
                 geometry: {
@@ -39,14 +39,7 @@ export class FeaturesApi {
                     name: b.name, 
                     description: b.description, 
                     typeId: b.buildingType?.buildingTypeId,
-                    typeLabel: b.buildingType?.labelName,
-                    typeDescription: b.buildingType?.description,
-                    costPerUnit: b.buildingType?.costPerUnit,
-                    unit: b.buildingType?.unit,
-                    residentsPerUnit: b.buildingType?.residentsPerUnit,
-                    points: b.buildingType?.points,
-                    inhabitable: b.buildingType?.inhabitable,
-                    color: b.buildingType?.color
+                    color: b.buildingType?.color || '#ffffff'  // Kleur uit de database
                 }
             }));
 
@@ -110,7 +103,7 @@ export class FeaturesApi {
             
             // PR1: buildingId verwijderd - database genereert de UUID
             const body = {
-                name: feature.meta.name || `Gebouw`,
+                name: feature.meta.name || `Gebouw ${feature.id.substring(0, 4)}`,
                 description: feature.meta.description || 'Nieuw getekend gebouw',
                 buildingType: feature.meta.typeId ? { buildingTypeId: feature.meta.typeId } : null,
                 height: feature.height,
