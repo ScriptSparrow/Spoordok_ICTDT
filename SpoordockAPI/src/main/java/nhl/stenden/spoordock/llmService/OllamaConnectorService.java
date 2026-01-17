@@ -98,6 +98,11 @@ public class OllamaConnectorService {
         chatStream(chatId, prompt, systemPrompts.getDescriptionHelperPrompt(), model, chunkReceived);
     }
     
+    public void startAnalysisStream(UUID chatId, String prompt, String model, Consumer<ChunkReceivedEventArgs> chunkReceived) {
+        chatStreamWithTools(chatId, prompt, systemPrompts.getAnalysisPrompt(), model, true, 3, chunkReceived);
+    }
+    
+
     public void startChatWithToolsStream(UUID chatId, String prompt, String model, Consumer<ChunkReceivedEventArgs> chunkReceived) {
 
         String systemPrompt = systemPrompts.getDefaultChatPrompt();
