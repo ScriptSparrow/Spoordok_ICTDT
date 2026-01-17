@@ -5,6 +5,7 @@ import nhl.stenden.spoordock.database.RoadSegmentRepository;
 import nhl.stenden.spoordock.database.RoadTypeRepository;
 import nhl.stenden.spoordock.database.entities.RoadSegment;
 import nhl.stenden.spoordock.services.mappers.RoadSegmentMapper;
+import nhl.stenden.spoordock.services.mappers.RoadTypeMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -30,6 +31,9 @@ class RoadServiceTest {
     @Mock
     private RoadSegmentMapper roadSegmentMapper;
 
+    @Mock
+    private RoadTypeMapper roadTypeMapper;
+
     @InjectMocks
     private RoadService roadService;
 
@@ -50,7 +54,36 @@ class RoadServiceTest {
         verify(roadSegmentRepository).findAll();
         verify(roadSegmentMapper).toDTOs(entities);
         verifyNoMoreInteractions(roadSegmentRepository, roadSegmentMapper);
-        verifyNoInteractions(roadTypeRepository);
+        verifyNoInteractions(roadTypeRepository, roadTypeMapper);
+    }
+
+    @Test
+    void getRoadTypeDTOs_returnsMappedDTOs() {
+        // Arrange
+        var roadTypeEntities = List.of(
+                mock(nhl.stenden.spoordock.database.entities.RoadTypeTemplate.class),
+                mock(nhl.stenden.spoordock.database.entities.RoadTypeTemplate.class)
+        );
+
+        var roadTypeDTOs = List.of(
+                mock(nhl.stenden.spoordock.controllers.dtos.RoadTypeDTO.class),
+                mock(nhl.stenden.spoordock.controllers.dtos.RoadTypeDTO.class)
+        );
+
+        when(roadTypeRepository.findAll()).thenReturn(roadTypeEntities);
+        when(roadTypeMapper.toDTOs(roadTypeEntities)).thenReturn(roadTypeDTOs);
+
+        // Act
+        var result = roadService.getRoadTypeDTOs();
+
+        // Assert
+        assertSame(roadTypeDTOs, result);
+
+        verify(roadTypeRepository).findAll();
+        verify(roadTypeMapper).toDTOs(roadTypeEntities);
+        verifyNoMoreInteractions(roadTypeRepository, roadTypeMapper);
+
+        verifyNoInteractions(roadSegmentRepository, roadSegmentMapper);
     }
 
     @Test
@@ -72,7 +105,7 @@ class RoadServiceTest {
 
         verify(roadSegmentRepository).existsById(id);
         verifyNoMoreInteractions(roadSegmentRepository);
-        verifyNoInteractions(roadSegmentMapper, roadTypeRepository);
+        verifyNoInteractions(roadSegmentMapper, roadTypeRepository, roadTypeMapper);
     }
 
     @Test
@@ -96,7 +129,7 @@ class RoadServiceTest {
         verify(roadSegmentMapper).toEntity(dto);
         verify(roadSegmentRepository).save(entity);
         verifyNoMoreInteractions(roadSegmentRepository, roadSegmentMapper);
-        verifyNoInteractions(roadTypeRepository);
+        verifyNoInteractions(roadTypeRepository, roadTypeMapper);
     }
 
     @Test
@@ -113,7 +146,7 @@ class RoadServiceTest {
         // Assert
         verify(roadSegmentRepository).deleteById(id);
         verifyNoMoreInteractions(roadSegmentRepository);
-        verifyNoInteractions(roadSegmentMapper, roadTypeRepository);
+        verifyNoInteractions(roadSegmentMapper, roadTypeRepository, roadTypeMapper);
     }
 
     @Test
@@ -136,7 +169,7 @@ class RoadServiceTest {
 
         verify(roadSegmentRepository).existsById(id);
         verifyNoMoreInteractions(roadSegmentRepository);
-        verifyNoInteractions(roadSegmentMapper, roadTypeRepository);
+        verifyNoInteractions(roadSegmentMapper, roadTypeRepository, roadTypeMapper);
     }
 
     @Test
@@ -164,6 +197,6 @@ class RoadServiceTest {
         assertSame(entity, captor.getValue());
 
         verifyNoMoreInteractions(roadSegmentRepository, roadSegmentMapper);
-        verifyNoInteractions(roadTypeRepository);
+        verifyNoInteractions(roadTypeRepository, roadTypeMapper);
     }
 }
