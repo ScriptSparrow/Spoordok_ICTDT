@@ -17,10 +17,11 @@ import nhl.stenden.spoordock.llmService.ToolHandling.ToolFunctionCall;
 import nhl.stenden.spoordock.llmService.ToolHandling.ToolParameter;
 import nhl.stenden.spoordock.services.mappers.BuildingEmbeddingMapper;
 import nhl.stenden.spoordock.services.mappers.BuildingPolygonMapper;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class BuildingService {
-    
+
     private final BuildingPolygonRepository buildingPolygonRepository;
     private final BuildingTypeRepository buildingTypeRepository;
     private final BuildingPolygonMapper buildingPolygonMapper;
@@ -63,18 +64,72 @@ public class BuildingService {
         return buildingTypeRepository.existsById(buildingTypeDTO.getBuildingTypeId());
     }
 
+    /**
+     * Voegt een nieuw gebouw toe aan de database.
+     * Gebouwtype is verplicht (database constraint NOT NULL).
+     */
+    @Transactional
     public BuildingPolygonDTO addBuilding(BuildingPolygonDTO buildingDTO) {
         var entity = buildingPolygonMapper.toEntity(buildingDTO);
+
+        // Verplicht: Gebouwtype ophalen en koppelen (database constraint is NOT NULL)
+        if (buildingDTO.getBuildingType() != null && buildingDTO.getBuildingType().getBuildingTypeId() != null) {
+            var buildingType = buildingTypeRepository
+                .findById(buildingDTO.getBuildingType().getBuildingTypeId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "Gebouwtype niet gevonden: " + buildingDTO.getBuildingType().getBuildingTypeId()));
+            entity.setBuildingType(buildingType);
+        } else {
+            throw new IllegalArgumentException("Gebouwtype is verplicht maar ontbreekt in de request");
+        }
+
         var savedEntity = buildingPolygonRepository.save(entity);
-        scheduleEmbeddingTask(savedEntity);
+        // Geef alleen de ID door aan de achtergrondtaak om race conditions te voorkomen
+        scheduleEmbeddingTask(savedEntity.getBuildingId());
         return buildingPolygonMapper.toDTO(savedEntity);
     }
 
-    
+    /**
+     * Werkt een bestaand gebouw bij in de database.
+     * Gebouwtype is verplicht (database constraint NOT NULL).
+     * 
+     * BELANGRIJK: We halen eerst de BESTAANDE entity op uit de database.
+     * Dit triggert de @PostLoad callback die isNew=false zet, waardoor
+     * JPA een UPDATE uitvoert in plaats van een INSERT (wat zou falen met
+     * "duplicate key" error door de Persistable interface).
+     */
+    @Transactional
     public BuildingPolygonDTO updateBuilding(BuildingPolygonDTO buildingDTO) {
-        var entity = buildingPolygonMapper.toEntity(buildingDTO);
-        var savedEntity = buildingPolygonRepository.save(entity);
-        scheduleEmbeddingTask(savedEntity);
+        // EERST: Haal de bestaande entity op uit de database
+        // Dit triggert @PostLoad waardoor isNew = false wordt gezet
+        var existingEntity = buildingPolygonRepository.findById(buildingDTO.getBuildingId())
+            .orElseThrow(() -> new IllegalArgumentException(
+                "Gebouw niet gevonden: " + buildingDTO.getBuildingId()));
+
+        // Update de velden van de BESTAANDE entity (niet een nieuwe aanmaken!)
+        existingEntity.setName(buildingDTO.getName());
+        existingEntity.setDescription(buildingDTO.getDescription());
+        existingEntity.setHeight(buildingDTO.getHeight());
+        
+        // Polygon coördinaten updaten via de mapper
+        var newPolygon = buildingPolygonMapper.toEntity(buildingDTO).getPolygon();
+        existingEntity.setPolygon(newPolygon);
+
+        // Verplicht: Gebouwtype ophalen en koppelen (database constraint is NOT NULL)
+        if (buildingDTO.getBuildingType() != null && buildingDTO.getBuildingType().getBuildingTypeId() != null) {
+            var buildingType = buildingTypeRepository
+                .findById(buildingDTO.getBuildingType().getBuildingTypeId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "Gebouwtype niet gevonden: " + buildingDTO.getBuildingType().getBuildingTypeId()));
+            existingEntity.setBuildingType(buildingType);
+        } else {
+            throw new IllegalArgumentException("Gebouwtype is verplicht maar ontbreekt in de request");
+        }
+
+        // Nu doet save() een UPDATE omdat isNew=false (na @PostLoad)
+        var savedEntity = buildingPolygonRepository.save(existingEntity);
+        // Geef alleen de ID door aan de achtergrondtaak om race conditions te voorkomen
+        scheduleEmbeddingTask(savedEntity.getBuildingId());
         return buildingPolygonMapper.toDTO(savedEntity);
     }
 
@@ -93,16 +148,36 @@ public class BuildingService {
         }
     }
 
-    //Embedding takes a long time, hence the need to do this in the background
-    //In general conversations don't start immediately after creating/updating a building, so this should be fine
-    private void scheduleEmbeddingTask(BuildingPolygonEntity buildingDTO) {
+    /**
+     * Plant een achtergrondtaak om embeddings te genereren voor een gebouw.
+     * Het maken van embeddings duurt lang, daarom doen we dit op de achtergrond.
+     * 
+     * We geven alleen de ID door (niet de hele entity) om race conditions te voorkomen.
+     * De achtergrondtaak haalt verse data op uit de database, zodat:
+     * - Lazy-loaded relaties correct worden opgehaald binnen een nieuwe transactie
+     * - Er geen StaleObjectStateException optreedt door detached entities
+     * 
+     * @param buildingId Het UUID van het gebouw waarvoor embeddings gegenereerd moeten worden
+     */
+    private void scheduleEmbeddingTask(java.util.UUID buildingId) {
         backgroundProcessor.submitTask(() -> {
-            String source = new BuildingEmbeddingMapper().toEmbeddableText(buildingDTO);
+            // Haal verse data op binnen de achtergrondtaak (inclusief gebouwtype)
+            var buildingOpt = buildingPolygonRepository.findByIdIncludingBuildingType(buildingId);
+            
+            // Null-check: als het gebouw ondertussen is verwijderd, slaan we de embedding over
+            if (buildingOpt.isEmpty()) {
+                System.out.println("Polygon " + buildingId + " niet meer gevonden, embedding wordt overgeslagen");
+                return;
+            }
+            
+            var building = buildingOpt.get();
+            
+            String source = new BuildingEmbeddingMapper().toEmbeddableText(building);
             float[] embedding = ollamaConnectorService.createEmbedding(source);
             String modelName = ollamaConnectorService.getEmbeddingModelName();
 
             BuildingPolygonEmbeddingEntity embeddingEntity = new BuildingPolygonEmbeddingEntity(
-                buildingDTO.getBuildingId(),
+                building.getBuildingId(),
                 embedding,
                 modelName,
                 source,
