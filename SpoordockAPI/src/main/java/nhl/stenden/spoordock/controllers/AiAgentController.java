@@ -56,6 +56,37 @@ public class AiAgentController {
        
     }
 
+    @GetMapping("analyse")
+    public ResponseEntity<?> analyseEnvironment(
+         @RequestHeader(value = "model", required = false) String model
+    ){
+        try{
+            // Use a new final variable immediately
+            final String selectedModel = (model == null || model.isEmpty()) 
+                ? llmConfiguration.getDefaultModel() 
+                : model;
+
+            var availableModels = ollamaConnectorService.getAvailableModels();
+            if (!availableModels.stream().anyMatch(m -> m.equals(selectedModel))) {
+                return ResponseEntity
+                    .badRequest()
+                    .body("Model '" + selectedModel + "' is not available. Available models: " + availableModels);
+            }
+
+            final String message = "Analyze the current environment.";
+            final SseEmitter emitter = new SseEmitter(0L); // No timeout, LLMs aren't that fast 
+            CompletableFuture.runAsync(() -> streamAnalysis(emitter, selectedModel, message));
+            return ResponseEntity.ok(emitter);
+        }  
+        catch(Exception ex)
+        {
+            return ResponseEntity
+                .internalServerError()
+                .body("Failed to analyse environment: " + ex.getMessage());
+        }
+
+    }
+
     @PostMapping("chat/{id}")
     public ResponseEntity<?> chat(
         @Parameter (description = "The unique identifier for the chat session", example = "123e4567-e89b-12d3-a456-426614174000")
@@ -87,6 +118,7 @@ public class AiAgentController {
         CompletableFuture.runAsync(() -> streamResponse(emitter, id, selectedModel, message));
         return ResponseEntity.ok(emitter);
     }
+    
 
     
     private void streamResponse(SseEmitter emitter, UUID id, String model, String message) {
@@ -98,9 +130,20 @@ public class AiAgentController {
         }
     }
 
+    private void streamAnalysis(SseEmitter emitter, String model, String message) {
+        try {
+            ollamaConnectorService.startAnalysisStream(message, model, text -> sendChunkEvent(emitter, text));
+            emitter.complete();
+        } catch (Exception e) {
+            emitter.completeWithError(e);
+        }
+    }
+
     private void sendChunkEvent(SseEmitter emitter, ChunkReceivedEventArgs args) {
         try {
-            emitter.send(SseEmitter.event().data(objectMapper.writeValueAsString(args)));
+            String data = objectMapper.writeValueAsString(args);
+            if (data == null) data = "";
+            emitter.send(SseEmitter.event().data(data));
         } catch (Exception e) {
             emitter.completeWithError(e);
         }
