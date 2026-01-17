@@ -9,10 +9,11 @@ import nhl.stenden.spoordock.controllers.dtos.BuildingTypeDTO;
 import nhl.stenden.spoordock.database.BuildingPolygonRepository;
 import nhl.stenden.spoordock.database.BuildingTypeRepository;
 import nhl.stenden.spoordock.services.mappers.BuildingPolygonMapper;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class BuildingService {
-    
+
     private final BuildingPolygonRepository buildingPolygonRepository;
     private final BuildingTypeRepository buildingTypeRepository;
     private final BuildingPolygonMapper buildingPolygonMapper;
@@ -51,18 +52,72 @@ public class BuildingService {
         return buildingTypeRepository.existsById(buildingTypeDTO.getBuildingTypeId());
     }
 
+    /**
+     * Voegt een nieuw gebouw toe aan de database.
+     * Gebouwtype is verplicht (database constraint NOT NULL).
+     */
+    @Transactional
     public BuildingPolygonDTO addBuilding(BuildingPolygonDTO buildingDTO) {
         var entity = buildingPolygonMapper.toEntity(buildingDTO);
+
+        // Verplicht: Gebouwtype ophalen en koppelen (database constraint is NOT NULL)
+        if (buildingDTO.getBuildingType() != null && buildingDTO.getBuildingType().getBuildingTypeId() != null) {
+            var buildingType = buildingTypeRepository
+                .findById(buildingDTO.getBuildingType().getBuildingTypeId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "Gebouwtype niet gevonden: " + buildingDTO.getBuildingType().getBuildingTypeId()));
+            entity.setBuildingType(buildingType);
+        } else {
+            throw new IllegalArgumentException("Gebouwtype is verplicht maar ontbreekt in de request");
+        }
+
         var savedEntity = buildingPolygonRepository.save(entity);
-        buildingEmbeddingService.scheduleEmbeddingTask(savedEntity);
+        // Geef alleen de ID door aan de achtergrondtaak om race conditions te voorkomen
+        buildingEmbeddingService.scheduleEmbeddingTask(savedEntity.getBuildingId());
         return buildingPolygonMapper.toDTO(savedEntity);
     }
 
-    
+    /**
+     * Werkt een bestaand gebouw bij in de database.
+     * Gebouwtype is verplicht (database constraint NOT NULL).
+     * 
+     * BELANGRIJK: We halen eerst de BESTAANDE entity op uit de database.
+     * Dit triggert de @PostLoad callback die isNew=false zet, waardoor
+     * JPA een UPDATE uitvoert in plaats van een INSERT (wat zou falen met
+     * "duplicate key" error door de Persistable interface).
+     */
+    @Transactional
     public BuildingPolygonDTO updateBuilding(BuildingPolygonDTO buildingDTO) {
-        var entity = buildingPolygonMapper.toEntity(buildingDTO);
-        var savedEntity = buildingPolygonRepository.save(entity);
-        buildingEmbeddingService.scheduleEmbeddingTask(savedEntity);
+        // EERST: Haal de bestaande entity op uit de database
+        // Dit triggert @PostLoad waardoor isNew = false wordt gezet
+        var existingEntity = buildingPolygonRepository.findById(buildingDTO.getBuildingId())
+            .orElseThrow(() -> new IllegalArgumentException(
+                "Gebouw niet gevonden: " + buildingDTO.getBuildingId()));
+
+        // Update de velden van de BESTAANDE entity (niet een nieuwe aanmaken!)
+        existingEntity.setName(buildingDTO.getName());
+        existingEntity.setDescription(buildingDTO.getDescription());
+        existingEntity.setHeight(buildingDTO.getHeight());
+        
+        // Polygon coördinaten updaten via de mapper
+        var newPolygon = buildingPolygonMapper.toEntity(buildingDTO).getPolygon();
+        existingEntity.setPolygon(newPolygon);
+
+        // Verplicht: Gebouwtype ophalen en koppelen (database constraint is NOT NULL)
+        if (buildingDTO.getBuildingType() != null && buildingDTO.getBuildingType().getBuildingTypeId() != null) {
+            var buildingType = buildingTypeRepository
+                .findById(buildingDTO.getBuildingType().getBuildingTypeId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "Gebouwtype niet gevonden: " + buildingDTO.getBuildingType().getBuildingTypeId()));
+            existingEntity.setBuildingType(buildingType);
+        } else {
+            throw new IllegalArgumentException("Gebouwtype is verplicht maar ontbreekt in de request");
+        }
+
+        // Nu doet save() een UPDATE omdat isNew=false (na @PostLoad)
+        var savedEntity = buildingPolygonRepository.save(existingEntity);
+        // Geef alleen de ID door aan de achtergrondtaak om race conditions te voorkomen
+        buildingEmbeddingService.scheduleEmbeddingTask(savedEntity.getBuildingId());
         return buildingPolygonMapper.toDTO(savedEntity);
     }
 
