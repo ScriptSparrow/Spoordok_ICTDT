@@ -16,9 +16,9 @@ services:
       dockerfile: Dockerfile
       target: dev
     volumes:
-      - ./src:/workspace/src
-      - ./pom.xml:/workspace/pom.xml
-      - ./target/classes:/workspace/target/classes
+      - ./src:/workspace/src:cached
+      - ./pom.xml:/workspace/pom.xml:cached
+      - ./target:/workspace/target:cached
       - ./.mvn/.cache:/root/.m2
     ports:
       - "6001:6001"
@@ -27,7 +27,7 @@ services:
       test: [ "CMD", "curl", "-f", "http://localhost:6001/health" ]
       interval: 3s
       timeout: 2s
-      start_period: 30s
+      start_period: 60s
 #      test: ["CMD-SHELL", "wget -q --spider http://localhost:6001/health || exit 1"]
 #      interval: 5s
 #      timeout: 5s
