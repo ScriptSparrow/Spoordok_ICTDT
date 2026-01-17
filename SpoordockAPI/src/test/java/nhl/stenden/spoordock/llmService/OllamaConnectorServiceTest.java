@@ -117,6 +117,48 @@ public class OllamaConnectorServiceTest {
     }
 
     @Test
+    void getAvailableModels_sendsCorrectHttpRequest() throws Exception {
+        String mockModelsResponse = """
+            {"models":[{"name":"model1"}]}
+            """;
+        
+        HttpResponse<String> modelsHttpResponse = mock(HttpResponse.class);
+        when(modelsHttpResponse.statusCode()).thenReturn(200);
+        when(modelsHttpResponse.body()).thenReturn(mockModelsResponse);
+        
+        ArgumentCaptor<HttpRequest> requestCaptor = ArgumentCaptor.forClass(HttpRequest.class);
+        
+        when(httpClient.<String>send(requestCaptor.capture(), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
+            .thenReturn(modelsHttpResponse);
+        
+        testingService.getAvailableModels();
+        
+        HttpRequest capturedRequest = requestCaptor.getValue();
+        assertEquals("GET", capturedRequest.method());
+        assertTrue(capturedRequest.uri().toString().endsWith("/api/tags"));
+        assertTrue(capturedRequest.headers().firstValue("Content-Type").orElse("").equals("application/json"));
+    }
+
+    @Test
+    void getAvailableModels_emptyModelList_returnsEmptyList() throws Exception {
+        String mockModelsResponse = """
+            {"models":[]}
+            """;
+        
+        HttpResponse<String> modelsHttpResponse = mock(HttpResponse.class);
+        when(modelsHttpResponse.statusCode()).thenReturn(200);
+        when(modelsHttpResponse.body()).thenReturn(mockModelsResponse);
+        
+        when(httpClient.<String>send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
+            .thenReturn(modelsHttpResponse);
+        
+        List<String> models = testingService.getAvailableModels();
+        
+        assertNotNull(models);
+        assertTrue(models.isEmpty());
+    }
+
+    @Test
     void getAvailableModels_httpError_throwsException() throws Exception {
         HttpResponse<String> errorResponse = mock(HttpResponse.class);
         when(errorResponse.statusCode()).thenReturn(500);
@@ -130,6 +172,72 @@ public class OllamaConnectorServiceTest {
         });
         
         assertTrue(exception.getMessage().contains("Failed to get available models"));
+    }
+
+    @Test
+    void getAvailableModels_httpClient404_throwsException() throws Exception {
+        HttpResponse<String> errorResponse = mock(HttpResponse.class);
+        when(errorResponse.statusCode()).thenReturn(404);
+        when(errorResponse.body()).thenReturn("Not Found");
+        
+        when(httpClient.<String>send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
+            .thenReturn(errorResponse);
+        
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            testingService.getAvailableModels();
+        });
+        
+        assertTrue(exception.getMessage().contains("Failed to get available models"));
+    }
+
+    @Test
+    void getAvailableModels_networkException_throwsRuntimeException() throws Exception {
+        when(httpClient.<String>send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
+            .thenThrow(new java.io.IOException("Network error"));
+        
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            testingService.getAvailableModels();
+        });
+        
+        assertTrue(exception.getMessage().contains("Failed to get available models"));
+        assertTrue(exception.getCause() instanceof java.io.IOException);
+    }
+
+    @Test
+    void getAvailableModels_invalidJson_throwsRuntimeException() throws Exception {
+        HttpResponse<String> modelsHttpResponse = mock(HttpResponse.class);
+        when(modelsHttpResponse.statusCode()).thenReturn(200);
+        when(modelsHttpResponse.body()).thenReturn("invalid json");
+        
+        when(httpClient.<String>send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
+            .thenReturn(modelsHttpResponse);
+        
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            testingService.getAvailableModels();
+        });
+        
+        assertTrue(exception.getMessage().contains("Failed to get available models"));
+    }
+
+    @Test
+    void getAvailableModels_multipleModels_returnsAllModelNames() throws Exception {
+        String mockModelsResponse = """
+            {"models":[{"name":"llama2"},{"name":"mistral"},{"name":"codellama"}]}
+            """;
+        
+        HttpResponse<String> modelsHttpResponse = mock(HttpResponse.class);
+        when(modelsHttpResponse.statusCode()).thenReturn(200);
+        when(modelsHttpResponse.body()).thenReturn(mockModelsResponse);
+        
+        when(httpClient.<String>send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
+            .thenReturn(modelsHttpResponse);
+        
+        List<String> models = testingService.getAvailableModels();
+        
+        assertEquals(3, models.size());
+        assertTrue(models.contains("llama2"));
+        assertTrue(models.contains("mistral"));
+        assertTrue(models.contains("codellama"));
     }
 
     @Test
