@@ -31,14 +31,19 @@ public class BuildingPolygonMapper implements Mapper<BuildingPolygonDTO, Buildin
         );
     }
 
+    /**
+     * Converteert een DTO naar een nieuwe entity.
+     * 
+     * PR1: buildingId wordt niet meer meegegeven - de database genereert
+     * automatisch een UUID via gen_random_uuid().
+     */
     @Override
     public BuildingPolygonEntity toEntity(BuildingPolygonDTO dto) {
 
         return new BuildingPolygonEntity(
-            dto.getBuildingId(),
             dto.getName(), 
             dto.getDescription(),
-            dto.getBuildingType() != null ? buildingTypeMapper.toEntity(dto.getBuildingType()) : null,
+            null, // Koppeling met gebouwtype wordt in de BuildingService gedaan om validatiefouten te voorkomen
             polygonMapper.toEntity(dto.getPolygon()),
             dto.getHeight()
         );
