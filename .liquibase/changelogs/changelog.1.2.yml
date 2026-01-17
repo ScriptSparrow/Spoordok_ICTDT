@@ -1,0 +1,18 @@
+﻿databaseChangeLog:
+  - changeSet:
+      id: 5
+      author: jurgen
+      comment: Voeg omschrijving kolom toe aan wegsegmenten tabel voor road description
+      changes:
+        - addColumn:
+            tableName: wegsegmenten
+            columns:
+              - column:
+                  name: omschrijving
+                  type: varchar(450)
+                  constraints:
+                    nullable: true
+      rollback:
+        - dropColumn:
+            tableName: wegsegmenten
+            columnName: omschrijving

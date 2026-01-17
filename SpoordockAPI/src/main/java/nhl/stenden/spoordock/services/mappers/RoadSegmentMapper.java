@@ -30,6 +30,7 @@ public class RoadSegmentMapper implements Mapper<RoadSegementDTO, RoadSegment> {
                 roadSegment.getId(),
                 roadTypeDTO,
                 roadSegment.getRoadDescription(),
+                roadSegment.getWidth(),
                 coordinates);
     }
 
@@ -42,6 +43,7 @@ public class RoadSegmentMapper implements Mapper<RoadSegementDTO, RoadSegment> {
                 roadDTO.getId(),
                 roadTypeTemplate,
                 roadDTO.getRoadDescription(),
+                roadDTO.getWidth(),
                 roadPoints);
     }
 

@@ -51,10 +51,7 @@ async function init() {
     if (btnRoad) btnRoad.onclick = () => editor.setMode('DRAW_ROAD');
     if (btnEdit) btnEdit.onclick = () => editor.setMode('EDIT');
     
-    if (btnDelete) btnDelete.onclick = () => {
-        editor.deleteSelected();
-        showToast('Feature is de prullenbak in gegaan');
-    };
+    if (btnDelete) btnDelete.onclick = () => editor.deleteSelected();
     
     if (btnUndo) btnUndo.onclick = () => editor.undo();
     if (btnRedo) btnRedo.onclick = () => editor.redo();
@@ -134,6 +131,10 @@ async function init() {
 
     // Alles ophalen uit de backend (of lokale store) bij het opstarten
     try {
+        // Gebouwtypes ophalen voor de dropdown en mapping
+        const buildingTypes = await api.getBuildingTypes();
+        editor.setBuildingTypes(buildingTypes);
+        
         const features = await api.getAll();
         features.forEach(f => {
             featureStore.addFeature(f);
@@ -179,6 +180,7 @@ function updateUI(selected) {
 
     if (selected) {
         const isPoly = selected.geometry.type === 'Polygon';
+<<<<<<< HEAD
         
         // Basis info HTML
         let html = `
@@ -188,6 +190,36 @@ function updateUI(selected) {
                 <p><span class="label">Functie:</span> <span class="value">${getBuildingTypeName(selected.featureType)}</span></p>
                 <p><span class="label">${isPoly ? 'Hoogte' : 'Breedte'}:</span> <span class="value">${isPoly ? selected.height : selected.width}m</span></p>
         `;
+=======
+        const meta = selected.meta || {};
+        
+        if (isPoly) {
+            infoContent.innerHTML = `
+                <div class="feature-info">
+                    <h3>${meta.name || 'Naamloos Gebouw'}</h3>
+                    <p><em>${meta.description || 'Geen omschrijving'}</em></p>
+                    <hr>
+                    <p><span class="label">ID:</span> <span class="value">${selected.id.substring(0, 8)}...</span></p>
+                    <p><span class="label">Type:</span> <span class="value">${meta.typeLabel || 'Onbekend'}</span></p>
+                    <p><span class="label">Hoogte:</span> <span class="value">${selected.height}m</span></p>
+                    <hr>
+                    <p><span class="label">Kosten:</span> <span class="value">€${meta.costPerUnit || 0} per ${meta.unit || 'eenheid'}</span></p>
+                    <p><span class="label">Bewoners:</span> <span class="value">${meta.residentsPerUnit || 0}</span></p>
+                    <p><span class="label">Punten:</span> <span class="value">${meta.points || 0}</span></p>
+                    <p><span class="label">Bewoonbaar:</span> <span class="value">${meta.inhabitable ? 'Ja' : 'Nee'}</span></p>
+                </div>
+            `;
+        } else {
+            infoContent.innerHTML = `
+                <div class="feature-info">
+                    <p><span class="label">ID:</span> <span class="value">${selected.id.substring(0, 8)}...</span></p>
+                    <p><span class="label">Soort:</span> <span class="value">${selected.geometry.type}</span></p>
+                    <p><span class="label">Functie:</span> <span class="value">${selected.featureType}</span></p>
+                    <p><span class="label">Breedte:</span> <span class="value">${selected.width}m</span></p>
+                </div>
+            `;
+        }
+>>>>>>> refs/rewritten/merged-main
         
         // Voor polygonen: toon naam, omschrijving en bewerkknop
         if (isPoly) {
