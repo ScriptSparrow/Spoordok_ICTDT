@@ -25,6 +25,8 @@ Voor alle IDEs zijn hot reloads geconfigureerd via de sprint devtools.
 Dit herstart the java applicatie na een aanpassing van een bestand (opslaan).
 Dit kan some 2 a 3 seconden duren.
 
+
+
 ### Visual Studio
 
 [launch.json](../.vscode/launch.json) : Heeft de launch configuraties.
