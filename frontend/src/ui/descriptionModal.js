@@ -169,7 +169,7 @@ export function showDescriptionModal(feature, buildingTypeName, defaultName, onS
  * @param {Object} feature - De te bewerken feature
  * @param {string} buildingTypeName - De naam van het gebouwtype
  * @param {string} currentName - De huidige naam van de polygon
- * @param {string} currentDescription - De huidige omschrijving van de polygon
+ * @param {string} currentDescription - De huidige beschrijving van de polygon
  * @param {Function} onSave - Callback wanneer gebruiker opslaat (ontvangt naam en beschrijving)
  * @param {Function} onCancel - Callback wanneer gebruiker annuleert
  */
@@ -191,11 +191,11 @@ export function showEditModal(feature, buildingTypeName, currentName, currentDes
                 type="text" 
                 id="edit-name-input" 
                 maxlength="255" 
-                value="${currentName}"
+                value="${currentName || ''}"
                 placeholder="Voer een naam in..."
             />
             <div class="field-hint" id="edit-name-hint">
-                Geef de polygon een beschrijvende naam.
+                Voer een beschrijvende naam in.
             </div>
             
             <label for="edit-description-input">Omschrijving (max 450 karakters):</label>
@@ -204,9 +204,9 @@ export function showEditModal(feature, buildingTypeName, currentName, currentDes
                 maxlength="450" 
                 rows="5" 
                 placeholder="Voer een beschrijving in..."
-            >${currentDescription}</textarea>
+            >${currentDescription || ''}</textarea>
             <div class="char-count">
-                <span id="edit-char-counter">${currentDescription.length}</span>/450
+                <span id="edit-char-counter">${(currentDescription || '').length}</span>/450
             </div>
             <div class="field-hint" id="edit-description-hint">
                 Beschrijving is verplicht.
@@ -234,7 +234,7 @@ export function showEditModal(feature, buildingTypeName, currentName, currentDes
     const btnSave = modal.querySelector('#btn-edit-save');
     const btnCancel = modal.querySelector('#btn-edit-cancel');
 
-    // Initiële validatie status
+    // Initiële validatie status instellen
     validateName();
     validateDescription();
 

@@ -12,6 +12,20 @@ import {
 import { createFeature } from './featureStore';
 import { showDescriptionModal } from '../ui/descriptionModal.js';
 
+// Mapping van interne type namen naar database gebouwtype namen
+const TYPE_TO_BUILDING_NAME = {
+    'housing': 'Vrijstaand huis',
+    'parks': 'Park/groen',
+    'water': 'Park/groen',
+    'office': 'Bedrijfsgebouw',
+    'industry': 'Bedrijfsgebouw',
+    'parking': 'Parkeerplaatsen',
+    'parking_covered': 'Parkeerplaatsen overdekt',
+    'apartment': 'Appartement',
+    'rowhouse': 'Rijtjeswoning',
+    'road': 'Wegen'
+};
+
 const TYPE_COLORS = {
     parks: Color.fromCssColorString('#34d399'),
     water: Color.fromCssColorString('#60a5fa'),
@@ -42,52 +56,8 @@ export class CesiumEditor {
         this.undoStack = [];
         this.redoStack = [];
 
-        this.buildingTypes = []; // Lijst met gebouwtypes vanuit de backend
-
         this.initEvents();
         this.initKeyboard();
-    }
-
-    /**
-     * Stelt de beschikbare gebouwtypes in en update de dropdown.
-     */
-    setBuildingTypes(types) {
-        this.buildingTypes = types;
-        this.updateTypeDropdown();
-    }
-
-    /**
-     * Vult de dropdown met de types uit de database.
-     */
-    updateTypeDropdown() {
-        const selectType = document.getElementById('select-type');
-        if (!selectType || this.buildingTypes.length === 0) return;
-
-        // We onthouden even wat er geselecteerd was
-        const prevValue = selectType.value;
-        selectType.innerHTML = '';
-
-        this.buildingTypes.forEach(t => {
-            const opt = document.createElement('option');
-            // We gebruiken de labelName als waarde voor compatibiliteit met TYPE_COLORS
-            opt.value = t.labelName.toLowerCase();
-            opt.textContent = t.labelName;
-            selectType.appendChild(opt);
-        });
-
-        // Wegen horen er ook bij in de UI, maar zijn geen 'BuildingType' in de backend
-        const roadOpt = document.createElement('option');
-        roadOpt.value = 'road';
-        roadOpt.textContent = 'Weg';
-        selectType.appendChild(roadOpt);
-
-        // Probeer de vorige selectie te herstellen, anders default naar de eerste optie
-        if (Array.from(selectType.options).some(o => o.value === prevValue)) {
-            selectType.value = prevValue;
-        } else if (selectType.options.length > 0) {
-            // Gebruik de eerste beschikbare optie uit de database
-            selectType.value = selectType.options[0].value;
-        }
     }
 
     /**
@@ -240,43 +210,51 @@ export class CesiumEditor {
     }
 
     /**
+     * Haalt de gebouwtype naam op voor de voorbeeldbeschrijvingen.
+     * @param {string} type - Het interne type (housing, parks, etc.)
+     * @returns {string} De database gebouwtype naam
+     */
+    getBuildingTypeName(type) {
+        return TYPE_TO_BUILDING_NAME[type] || 'Vrijstaand huis';
+    }
+
+    /**
      * Slaat het getekende object op als feature.
      */
-    async finishDrawing() {
-        if (this.mode === 'IDLE') return;
-        
+    finishDrawing() {
         console.log('CesiumEditor: Klaar met tekenen!', { mode: this.mode, pointsCount: this.drawingPoints.length });
-        
-        const currentMode = this.mode;
-        const points = [...this.drawingPoints];
-        
-        // We stoppen meteen met tekenen in de UI om re-entry te voorkomen
-        this.setMode('IDLE');
-
-        const minPoints = currentMode === 'DRAW' ? 3 : 2;
-        if (points.length < minPoints) {
+        const minPoints = this.mode === 'DRAW' ? 3 : 2;
+        if (this.drawingPoints.length < minPoints) {
             const msg = `Niet genoeg punten! Klik minstens ${minPoints} keer.`;
             console.warn('CesiumEditor:', msg);
             if (this.onMessage) this.onMessage(msg, 'error');
+            this.setMode('IDLE');
             return;
         }
 
         const selectType = document.getElementById('select-type');
-        let type = (selectType && selectType.value) ? selectType.value : null;
         
-        // Fallback: gebruik de eerste beschikbare optie uit de dropdown
-        if (!type && selectType && selectType.options.length > 0) {
+        // Haal het geselecteerde gebouwtype op (UUID als value, labelName als tekst)
+        const typeId = selectType ? selectType.value : null;
+        const selectedOption = selectType && selectType.selectedOptions.length > 0 ? selectType.selectedOptions[0] : null;
+        const buildingTypeLabelName = selectedOption ? selectedOption.textContent : null;
+        
+        // Gebruik de geselecteerde typeId als featureType, met fallback naar eerste dropdown optie
+        let type = null;
+        if (this.mode === 'DRAW_ROAD') {
+            // Wegen hebben een apart type
+            type = 'road';
+        } else if (typeId) {
+            // Gebruik de geselecteerde UUID uit de dropdown
+            type = typeId;
+        } else if (selectType && selectType.options.length > 0) {
+            // Fallback: eerste beschikbare optie uit de dropdown
             type = selectType.options[0].value;
         }
         
-        // Fix: Als we een weg tekenen, moet het type altijd 'road' zijn
-        if (this.mode === 'DRAW_ROAD') {
-            type = 'road';
-        }
+        const geomType = this.mode === 'DRAW' ? 'Polygon' : 'LineString';
         
-        const geomType = currentMode === 'DRAW' ? 'Polygon' : 'LineString';
-        
-        const coords = points.map(p => {
+        const coords = this.drawingPoints.map(p => {
             const carto = this.viewer.scene.globe.ellipsoid.cartesianToCartographic(p);
             const lon = CesiumMath.toDegrees(carto.longitude);
             const lat = CesiumMath.toDegrees(carto.latitude);
@@ -287,34 +265,21 @@ export class CesiumEditor {
         const finalCoords = geomType === 'Polygon' ? [[...coords, coords[0]]] : coords;
 
         const feature = createFeature(type, geomType, finalCoords);
-        console.log('CesiumEditor: Feature aangemaakt', feature);
-
-        // Stel de typeId en kleur in vanaf de dropdown (nu een UUID)
-        if (selectType && selectType.value) {
-            feature.meta.typeId = selectType.value;
-            // Haal de kleur uit het data-color attribuut van de geselecteerde optie
-            const selectedOption = selectType.selectedOptions[0];
-            if (selectedOption && selectedOption.dataset.color) {
-                feature.meta.color = selectedOption.dataset.color;
-            }
+        
+        // Stel de typeId (UUID) in voor de backend
+        if (typeId) {
+            feature.meta.typeId = typeId;
         }
+        
+        console.log('CesiumEditor: Feature aangemaakt', feature);
 
         // Voor polygonen: toon de beschrijving modal
         if (geomType === 'Polygon') {
             // Standaard naam genereren (deze moet verplicht gewijzigd worden)
             const defaultName = `Gebouw ${feature.id.substring(0, 4)}`;
             
-            // Gebouwtype naam ophalen van de geselecteerde dropdown optie
-            const buildingTypeName = this.getBuildingTypeName(selectType);
-            
-            // Hoogte instellen vanaf de slider (moet vóór de modal opgeslagen worden)
-            const heightInput = document.getElementById('height-input');
-            if (heightInput) {
-                feature.height = parseFloat(heightInput.value);
-            }
-            
-            // Preview opruimen voordat de modal verschijnt
-            this.cleanupDrawing();
+            // Gebruik de labelName van de dropdown voor voorbeeldbeschrijvingen
+            const buildingTypeName = buildingTypeLabelName || 'Vrijstaand huis';
             
             showDescriptionModal(
                 feature,
@@ -324,6 +289,12 @@ export class CesiumEditor {
                     // Gebruiker heeft opgeslagen - stel naam en beschrijving in
                     feature.meta.name = name;
                     feature.meta.description = description;
+                    
+                    // Hoogte instellen vanaf de slider
+                    const heightInput = document.getElementById('height-input');
+                    if (heightInput) {
+                        feature.height = parseFloat(heightInput.value);
+                    }
                     
                     this.execute({ type: 'CREATE', feature: feature });
                     setTimeout(() => this.selectFeature(feature.id), 100);
@@ -340,6 +311,7 @@ export class CesiumEditor {
             // Wegen - bestaand gedrag behouden
             feature.meta.description = 'Nieuwe weg';
             
+            // Breedte instellen vanaf de slider
             const heightInput = document.getElementById('height-input');
             if (heightInput) {
                 feature.width = parseFloat(heightInput.value);
@@ -350,18 +322,6 @@ export class CesiumEditor {
             if (this.onMessage) this.onMessage('Feature succesvol opgeslagen!', 'success');
             this.setMode('IDLE');
         }
-    }
-    
-    /**
-     * Haalt de gebouwtype naam op van de geselecteerde dropdown optie.
-     * @param {HTMLSelectElement} selectElement - De type selectie dropdown
-     * @returns {string} De naam van het gebouwtype
-     */
-    getBuildingTypeName(selectElement) {
-        if (selectElement && selectElement.selectedOptions && selectElement.selectedOptions.length > 0) {
-            return selectElement.selectedOptions[0].textContent || selectElement.value;
-        }
-        return 'Onbekend';
     }
 
     /**
@@ -426,9 +386,9 @@ export class CesiumEditor {
         const feature = this.featureStore.getFeature(id);
         if (!feature) return;
 
-        // Haal kleur uit feature meta (database) of val terug op TYPE_COLORS voor wegen
-        const colorHex = feature.meta?.color || TYPE_COLORS[feature.featureType]?.toCssHexString() || '#ffffff';
-        const baseColor = Color.fromCssColorString(colorHex);
+        // Gebruik kleur uit meta (database) of fallback naar TYPE_COLORS of wit
+        const colorHex = feature.meta?.color;
+        const baseColor = colorHex ? Color.fromCssColorString(colorHex) : (TYPE_COLORS[feature.featureType] || Color.WHITE);
         const color = highlighted ? baseColor.withAlpha(0.9) : baseColor.withAlpha(0.6);
 
         if (entity.polygon) {
@@ -447,71 +407,44 @@ export class CesiumEditor {
     async updateSelectedFeature(updates) {
         if (!this.selectedId) return;
         const oldFeature = JSON.parse(JSON.stringify(this.featureStore.getFeature(this.selectedId)));
-        const newFeature = JSON.parse(JSON.stringify(oldFeature));
-        Object.assign(newFeature, updates);
+        const newFeature = { ...oldFeature, ...updates };
         
-        // Als het type verandert, moeten we ook de meta-data (zoals typeId en kleur) bijwerken
-        if (updates.featureType) {
-            const buildingType = this.buildingTypes.find(t => t.labelName.toLowerCase() === updates.featureType);
-            if (buildingType) {
-                newFeature.meta = {
-                    ...newFeature.meta,
-                    typeId: buildingType.buildingTypeId,
-                    typeLabel: buildingType.labelName,
-                    costPerUnit: buildingType.costPerUnit,
-                    unit: buildingType.unit,
-                    residentsPerUnit: buildingType.residentsPerUnit,
-                    points: buildingType.points,
-                    inhabitable: buildingType.inhabitable,
-                    color: buildingType.color // Kleur bijwerken zodat de polygoon de juiste kleur krijgt
-                };
-            } else if (updates.featureType === 'road') {
-                newFeature.meta = {
-                    ...newFeature.meta,
-                    typeId: null,
-                    typeLabel: 'Weg',
-                    color: '#ffff00' // Standaard gele kleur voor wegen
-                };
-            }
+        // Optimistisch updaten: eerst in de UI, dan pas de backend storen
+        this.featureStore.updateFeature(this.selectedId, newFeature);
+        this.syncEntity(newFeature);
+        this.updateEntityHighlight(this.selectedId, true);
+
+        // Direct API call om de wijzigingen naar de backend te sturen
+        // (execute met shouldApply=false slaat de apply() over, dus we moeten hier de API aanroepen)
+        try {
+            await this.api.update(this.selectedId, newFeature);
+            console.log('CesiumEditor: Feature succesvol bijgewerkt in de database');
+        } catch (err) {
+            console.error('CesiumEditor: Opslaan naar backend mislukt', err);
+            if (this.onMessage) this.onMessage('Opslaan mislukt - wijziging alleen lokaal opgeslagen', 'error');
         }
 
-        // Opslaan naar de backend (apart van execute om dubbele lokale updates te voorkomen)
-        this.api.update(this.selectedId, newFeature).catch(err => {
-            console.error('CesiumEditor: Update naar backend mislukt', err);
-            if (this.onMessage) this.onMessage('Opslaan naar server mislukt', 'error');
-        });
-
-        // Voeg toe aan undo stack zonder opnieuw apply() aan te roepen
         this.execute({
             type: 'UPDATE',
             id: this.selectedId,
             oldFeature: oldFeature,
             newFeature: newFeature
-        }, false); // lokale updates en API call zijn al gedaan hierboven
+        }, false); // niet opnieuw applyen, we hebben het net gedaan
     }
 
     /**
      * Weg ermee! Verwijdert de geselecteerde feature.
      */
-    async deleteSelected() {
+    deleteSelected() {
         if (!this.selectedId) return;
         const feature = this.featureStore.getFeature(this.selectedId);
         
-        try {
-            await this.execute({
-                type: 'DELETE',
-                feature: JSON.parse(JSON.stringify(feature))
-            });
-            
-            this.clearSelection();
-            if (this.onMessage) this.onMessage('Feature verwijderd.', 'info');
-        } catch (err) {
-            console.error('CesiumEditor: Verwijderen mislukt', err);
-            if (this.onMessage) this.onMessage('Verwijderen mislukt.', 'error');
-            
-            // Herstel de entity op de kaart als het misging (apply heeft em al verwijderd!)
-            this.syncEntity(feature);
-        }
+        this.execute({
+            type: 'DELETE',
+            feature: JSON.parse(JSON.stringify(feature))
+        });
+        
+        this.clearSelection();
     }
 
     /**
@@ -525,9 +458,9 @@ export class CesiumEditor {
             entity = this.viewer.entities.add({ id: feature.id });
         }
 
-        // Haal kleur uit feature meta (database) of val terug op TYPE_COLORS voor wegen
-        const colorHex = feature.meta?.color || TYPE_COLORS[feature.featureType]?.toCssHexString() || '#ffffff';
-        const color = Color.fromCssColorString(colorHex);
+        // Gebruik kleur uit meta (database) of fallback naar TYPE_COLORS of wit
+        const colorHex = feature.meta?.color;
+        const color = colorHex ? Color.fromCssColorString(colorHex) : (TYPE_COLORS[feature.featureType] || Color.WHITE);
 
         if (feature.geometry.type === 'Polygon') {
             const flattened = feature.geometry.coordinates[0].reduce((acc, val) => acc.concat(val), []);
@@ -573,47 +506,22 @@ export class CesiumEditor {
      */
     async execute(command, shouldApply = true) {
         console.log('CesiumEditor: Actie uitvoeren', { type: command.type, shouldApply });
-        if (shouldApply) {
-            await this.apply(command);
-        }
+        if (shouldApply) this.apply(command);
         this.undoStack.push(command);
         this.redoStack = [];
     }
 
     /**
      * Past de actie echt toe in de store en backend.
-     * 
-     * PR1: Bij CREATE wordt de tijdelijke ID vervangen door de database-gegenereerde UUID.
-     * De backend retourneert de echte UUID die we gebruiken om de lokale data bij te werken.
      */
     async apply(command) {
         console.log('CesiumEditor: Actie toepassen', command);
         try {
             switch (command.type) {
                 case 'CREATE':
-                    // PR1: Sla tijdelijke ID op voor latere vervanging
-                    const tempId = command.feature.id;
                     this.featureStore.addFeature(command.feature);
                     this.syncEntity(command.feature);
-                    
-                    // PR1: Haal de opgeslagen feature op met database-gegenereerde UUID
-                    const savedFeature = await this.api.create(command.feature);
-                    
-                    // PR1: Vervang tijdelijke ID door database-UUID als deze verschillend is
-                    if (savedFeature.id && savedFeature.id !== tempId) {
-                        console.log('CesiumEditor: ID-swap van', tempId, 'naar', savedFeature.id);
-                        
-                        // Verwijder entity en feature met tijdelijke ID
-                        this.featureStore.removeFeature(tempId);
-                        this.viewer.entities.removeById(tempId);
-                        
-                        // Update command.feature met nieuwe ID (voor undo/redo)
-                        command.feature.id = savedFeature.id;
-                        
-                        // Voeg feature toe met database-gegenereerde UUID
-                        this.featureStore.addFeature(command.feature);
-                        this.syncEntity(command.feature);
-                    }
+                    await this.api.create(command.feature);
                     break;
                 case 'UPDATE':
                     this.featureStore.updateFeature(command.id, command.newFeature);
@@ -629,8 +537,6 @@ export class CesiumEditor {
             }
         } catch (err) {
             console.error('CesiumEditor: Toepassen mislukt', err);
-            // We gooien de error door zodat de UI kan reageren
-            throw err;
         }
     }
 
@@ -641,7 +547,6 @@ export class CesiumEditor {
         const cmd = this.undoStack.pop();
         if (!cmd) {
             console.log('CesiumEditor: Niks meer ongedaan te maken');
-            if (this.onMessage) this.onMessage('Niks om ongedaan te maken.', 'info');
             return;
         }
 
@@ -666,10 +571,8 @@ export class CesiumEditor {
             }
             this.redoStack.push(cmd);
             this.clearSelection();
-            if (this.onMessage) this.onMessage('Actie ongedaan gemaakt.', 'info');
         } catch (err) {
             console.error('CesiumEditor: Undo mislukt', err);
-            if (this.onMessage) this.onMessage('Undo mislukt.', 'error');
         }
     }
 
@@ -680,17 +583,10 @@ export class CesiumEditor {
         const cmd = this.redoStack.pop();
         if (!cmd) {
             console.log('CesiumEditor: Niks om opnieuw te doen');
-            if (this.onMessage) this.onMessage('Niks om opnieuw te doen.', 'info');
             return;
         }
         console.log('CesiumEditor: Redo actie', cmd);
-        try {
-            await this.apply(cmd);
-            this.undoStack.push(cmd);
-            if (this.onMessage) this.onMessage('Actie opnieuw uitgevoerd.', 'info');
-        } catch (err) {
-            console.error('CesiumEditor: Redo mislukt', err);
-            if (this.onMessage) this.onMessage('Redo mislukt.', 'error');
-        }
+        await this.apply(cmd);
+        this.undoStack.push(cmd);
     }
 }
