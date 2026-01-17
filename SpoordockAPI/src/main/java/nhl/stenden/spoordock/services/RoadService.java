@@ -17,12 +17,14 @@ public class RoadService {
     private final RoadTypeRepository roadTypeRepository;
     private final RoadSegmentRepository roadSegmentRepository;
     private final RoadSegmentMapper roadSegmentMapper;
+    private final RoadTypeMapper roadTypeMapper;
 
-    public RoadService(RoadTypeRepository roadTypeRepository, RoadSegmentRepository roadSegmentRepository, RoadSegmentMapper roadSegmentMapper)
+    public RoadService(RoadTypeRepository roadTypeRepository, RoadSegmentRepository roadSegmentRepository, RoadSegmentMapper roadSegmentMapper, RoadTypeMapper roadTypeMapper)
     {
         this.roadTypeRepository = roadTypeRepository;
         this.roadSegmentRepository = roadSegmentRepository;
         this.roadSegmentMapper = roadSegmentMapper;
+        this.roadTypeMapper = roadTypeMapper;
     }
 
     public List<RoadSegementDTO> getRoadDTOs () {
@@ -32,6 +34,29 @@ public class RoadService {
 
     public List<RoadTypeDTO> getRoadTypeDTOs() {
         var roadTypes = roadTypeRepository.findAll();
-        return new RoadTypeMapper().toDTOs(roadTypes);
+        return roadTypeMapper.toDTOs(roadTypes);
     }
+
+    public void addRoadSegment(RoadSegementDTO roadSegementDTO) throws IllegalArgumentException {
+        if(roadSegmentRepository.existsById(roadSegementDTO.getId())){
+            throw new IllegalArgumentException("Road segment with ID " + roadSegementDTO.getId() + " already exists.");
+        }
+
+        var entity = roadSegmentMapper.toEntity(roadSegementDTO);
+        roadSegmentRepository.save(entity);
+    }
+
+    public void deleteRoadSegment(RoadSegementDTO roadSegementDTO)  {
+        roadSegmentRepository.deleteById(roadSegementDTO.getId());
+    }
+
+    public void updateRoadSegment(RoadSegementDTO roadSegementDTO) throws IllegalArgumentException {
+        if(!roadSegmentRepository.existsById(roadSegementDTO.getId())){
+            throw new IllegalArgumentException("Road segment with ID " + roadSegementDTO.getId() + " does not exist.");
+        }
+
+        var entity = roadSegmentMapper.toEntity(roadSegementDTO);
+        roadSegmentRepository.save(entity);
+    }
+
 }
