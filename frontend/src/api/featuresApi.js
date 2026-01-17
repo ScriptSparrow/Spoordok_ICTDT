@@ -28,14 +28,19 @@ export class FeaturesApi {
             // Gebouwen even omzetten naar ons eigen formaatje
             const normalizedBuildings = buildings.map(b => ({
                 id: b.buildingId,
-                featureType: b.buildingType?.name?.toLowerCase() || 'housing',
+                featureType: b.buildingType?.buildingTypeId || null,
                 height: b.height,
                 width: 0,
                 geometry: {
                     type: 'Polygon',
                     coordinates: [b.polygon.coordinates.map(c => [c.x, c.y])]
                 },
-                meta: { name: b.name, description: b.description, typeId: b.buildingType?.buildingTypeId }
+                meta: { 
+                    name: b.name, 
+                    description: b.description, 
+                    typeId: b.buildingType?.buildingTypeId,
+                    color: b.buildingType?.color || '#ffffff'  // Kleur uit de database
+                }
             }));
 
             // Wegen ook even gladstrijken
@@ -80,7 +85,6 @@ export class FeaturesApi {
             const url = `${this.baseUrl}/api/buildings/building`;
             
             const body = {
-                buildingId: feature.id,
                 name: feature.meta.name || `Gebouw ${feature.id.substring(0, 4)}`,
                 description: feature.meta.description || 'Nieuw getekend gebouw',
                 buildingType: feature.meta.typeId ? { buildingTypeId: feature.meta.typeId } : null,
