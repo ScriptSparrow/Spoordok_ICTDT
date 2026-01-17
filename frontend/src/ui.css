@@ -70,34 +70,33 @@
 #info-content .label { color: #9ca3af; }
 #info-content .value { color: #e6e6e6; font-weight: 500; }
 
-/* Horizontale scheidingslijn in info panel */
+/* Scheidingslijn tussen basis info en polygon details */
 .info-divider {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid rgba(255,255,255,0.12);
   margin: 12px 0;
 }
 
-/* Omschrijving tekst in info panel */
+/* Omschrijving tekst styling */
 .description-text {
   color: #cbd5e1;
   font-size: 13px;
   line-height: 1.5;
   margin: 4px 0 12px 0;
   padding: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 4px;
-  max-height: 100px;
-  overflow-y: auto;
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+  word-wrap: break-word;
 }
 
-/* Bewerk knop in info panel */
-.btn-edit {
+/* Bewerk knop voor polygon details */
+.btn-edit-details {
   width: 100%;
   margin-top: 8px;
-  background: #3b82f6;
+  background: #1e3a5f;
   border-color: #2563eb;
 }
-.btn-edit:hover {
+.btn-edit-details:hover {
   background: #2563eb;
 }
 
@@ -183,8 +182,7 @@
     margin: 5px 0 0 0;
 }
 
-#btn-example-description,
-#btn-edit-example-description {
+#btn-example-description {
     width: 100%;
     padding: 10px;
     margin-top: 15px;
@@ -220,7 +218,7 @@
 }
 
 .btn-secondary:hover {
-    background: #525f7a;
+    background: #334155;
 }
 
 .btn-cancel {
