@@ -1,6 +1,6 @@
 package nhl.stenden.spoordock.controllers;
 
-import nhl.stenden.spoordock.controllers.dtos.RoadSegementDTO;
+import nhl.stenden.spoordock.controllers.dtos.RoadSegmentDTO;
 import nhl.stenden.spoordock.database.RoadTypeRepository;
 import nhl.stenden.spoordock.services.RoadService;
 
@@ -25,22 +25,22 @@ public class RoadSegmentController {
     }
 
     @GetMapping("list") // "list" ipv "/list", anders vanaf de root ipv "/api/road/list"
-    public List<RoadSegementDTO> getRoads() {
+    public List<RoadSegmentDTO> getRoads() {
         return roadService.getRoadDTOs();
     }
 
     @PostMapping
-    public ResponseEntity<?> addRoad(RoadSegementDTO roadSegementDTO) {
-        if (roadSegementDTO == null) {
-            return ResponseEntity.status(400).body("RoadSegementDTO cannot be null");
+    public ResponseEntity<?> addRoad(RoadSegmentDTO roadSegmentDTO) {
+        if (roadSegmentDTO == null) {
+            return ResponseEntity.status(400).body("RoadSegmentDTO cannot be null");
         }
 
-        if(roadSegementDTO.getId() == null) {
-            return ResponseEntity.status(400).body("RoadSegementDTO ID cannot be null");
+        if(roadSegmentDTO.getId() == null) {
+            return ResponseEntity.status(400).body("RoadSegmentDTO ID cannot be null");
         }
 
         try {
-            roadService.addRoadSegment(roadSegementDTO);
+            roadService.addRoadSegment(roadSegmentDTO);
             return ResponseEntity.status(201).body("Road segment created successfully");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(409).body(e.getMessage());
@@ -48,17 +48,17 @@ public class RoadSegmentController {
     }
 
     @PutMapping
-    public ResponseEntity<?> updateRoad(RoadSegementDTO roadSegementDTO) {
-        if (roadSegementDTO == null) {
-            return ResponseEntity.status(400).body("RoadSegementDTO cannot be null");
+    public ResponseEntity<?> updateRoad(RoadSegmentDTO roadSegmentDTO) {
+        if (roadSegmentDTO == null) {
+            return ResponseEntity.status(400).body("RoadSegmentDTO cannot be null");
         }
 
-        if(roadSegementDTO.getId() == null) {
-            return ResponseEntity.status(400).body("RoadSegementDTO ID cannot be null");
+        if(roadSegmentDTO.getId() == null) {
+            return ResponseEntity.status(400).body("RoadSegmentDTO ID cannot be null");
         }
 
         try {
-            roadService.updateRoadSegment(roadSegementDTO);
+            roadService.updateRoadSegment(roadSegmentDTO);
             return ResponseEntity.status(200).body("Road segment updated successfully");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(404).body(e.getMessage());
@@ -66,16 +66,16 @@ public class RoadSegmentController {
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteRoad(RoadSegementDTO roadSegementDTO) {
-        if (roadSegementDTO == null) {
-            return ResponseEntity.status(400).body("RoadSegementDTO cannot be null");
+    public ResponseEntity<?> deleteRoad(RoadSegmentDTO roadSegmentDTO) {
+        if (roadSegmentDTO == null) {
+            return ResponseEntity.status(400).body("RoadSegmentDTO cannot be null");
         }
 
-        if(roadSegementDTO.getId() == null) {
-            return ResponseEntity.status(400).body("RoadSegementDTO ID cannot be null");
+        if(roadSegmentDTO.getId() == null) {
+            return ResponseEntity.status(400).body("RoadSegmentDTO ID cannot be null");
         }
 
-        roadService.deleteRoadSegment(roadSegementDTO);
+        roadService.deleteRoadSegment(roadSegmentDTO);
         return ResponseEntity.status(200).body("Road segment deleted successfully");
     }
 
