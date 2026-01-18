@@ -11,7 +11,7 @@ export class FeatureStore {
      * Voegt een feature toe aan de map.
      */
     addFeature(feature) {
-        console.log('FeatureStore: Feature toegevoegd', feature.id);
+        
         this.features.set(feature.id, feature);
     }
 
@@ -19,7 +19,7 @@ export class FeatureStore {
      * Trapt een feature uit de map.
      */
     removeFeature(id) {
-        console.log('FeatureStore: Feature verwijderd', id);
+        
         this.features.delete(id);
     }
 
@@ -34,7 +34,7 @@ export class FeatureStore {
      * Update een bestaande feature met nieuwe data.
      */
     updateFeature(id, updates) {
-        console.log('FeatureStore: Feature geüpdatet', id, updates);
+        
         const feature = this.features.get(id);
         if (feature) {
             Object.assign(feature, updates);

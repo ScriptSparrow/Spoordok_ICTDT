@@ -148,6 +148,7 @@ public class OllamaConnectorService {
                 HttpRequest httpRequest = HttpRequest.newBuilder()
                     .uri(baseUrl.resolve("/api/chat"))
                     .header("Content-Type", "application/json")
+                    .header("X-Request-ID", chatId.toString() + "-" + loop) // Track conversation
                     .POST(HttpRequest.BodyPublishers.ofString(jsonString))
                     .build();
                 

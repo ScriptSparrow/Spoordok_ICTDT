@@ -1,0 +1,410 @@
+import { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
+
+// Render newlines like chat apps typically do
+marked.setOptions({ 
+    gfm: true, 
+    breaks: false
+});
+
+// Keep per-element markdown buffer + throttled render timer
+const mdState = new WeakMap();
+
+
+function appendMarkdownChunk(el, chunk, delayMs = 80) {
+    if (!el) return;
+
+    let state = mdState.get(el);
+    if (!state) {
+        state = { buffer: "", timerId: null };
+        mdState.set(el, state);
+    }
+
+    // Add the chunk as-is (preserve original spacing/newlines from backend)
+    state.buffer += chunk;
+
+    if (state.timerId) return;
+
+    state.timerId = setTimeout(() => {
+        state.timerId = null;
+        el.innerHTML = marked.parse(state.buffer);
+    }, delayMs);
+}
+
+function flushMarkdown(el) {
+    const state = mdState.get(el);
+    if (!el || !state) return;
+
+    if (state.timerId) {
+        clearTimeout(state.timerId);
+        state.timerId = null;
+    }
+    
+    el.innerHTML = marked.parse(state.buffer);
+}
+
+const analyseWidgetTemplate = document.createElement('template');
+analyseWidgetTemplate.innerHTML = `
+
+    <style 
+    <style>
+
+        :host {
+            display: flex;
+            height: 100%;
+            --chat-bg: #13171aff;
+            --chat-font-family: 'Trebuchet MS', sans-serif;
+            --chat-bubble-bg: #274C77;
+            --bot-response-bg: transparent;
+            --chat-bubble-text-color: white;
+            --input-bg: #001d0cff;
+        }
+
+        .analyse-widget {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+
+        .chat-container {
+            border-radius: 12px;
+            flex: 1;
+            width: 90%;
+            overflow-y: auto;
+            background-color: var(--chat-bg);
+            padding: 5%;
+        }
+        
+        .chat-bubble {
+            border-radius: 8px;
+            padding: 1em;
+            color: var(--chat-bubble-text-color);
+            font-family: var(--chat-font-family);
+        }
+
+        .bot-chat {
+            background-color: var(--bot-response-bg);
+        }
+
+        .bot-chat::after {
+            content: '...';
+            display: inline-block;
+            width: 1.5em;
+            margin-left: 0.3em;
+            text-align: left;
+            animation: loading-dots .5s steps(4, end) infinite;
+        }
+
+        .bot-chat.complete::after {
+            display: none;
+        }
+
+        @keyframes loading-dots {
+            0% { content: '.'; }
+            33% { content: '..'; }
+            66% { content: '...'; }
+            100% { content: '.'; }
+        }
+
+        .user-chat {
+            margin-left: auto;
+            max-width: 80%;
+            align-self: flex-end;
+            background-color: var(--chat-bubble-bg);
+        }
+
+        .chat-bubble .bot-thinking {
+            position: relative;
+            font-size: 0.9rem;
+            cursor: default;
+            font-style: italic;
+            opacity: 0.7;
+            max-height: none;
+            transition: max-height 0.3s ease;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            border: 1px solid var(--thinking-border-color, #4a90e2);
+            border-radius: 8px;
+            background:transparent;
+            overflow-y: visible;
+        }
+
+            .chat-bubble .bot-thinking .thinking-text {
+                overflow: hidden;
+            }
+
+            .chat-bubble.complete .bot-thinking .thinking-text {
+                max-height: 0.5em;
+            }
+
+            .chat-bubble.complete .bot-thinking .thinking-text.show {
+                max-height: none;
+            }
+        
+        .chat-container .thinking-collapse-button {
+            z-index: 1000;
+            position: absolute;
+            top: -0.5em;
+            background-color: var(--chat-bg);
+        }
+
+        .chat-row {
+            display: flex;
+        }
+            
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            margin-right: 5%;
+            margin-left: 5%;
+            margin-bottom: 1rem;
+        }
+
+        .model-select {
+            margin-top: 0.5rem;
+            padding: 0.3rem;
+            color: var(--select-text-color, white);
+            background-color: var(--select-bg, #003817ff);
+            border: none;
+            border-radius: 8px;
+        }
+
+        #activateButton {
+            padding: 0.5rem;
+            border-radius: 8px;
+            background-color: var(--button-bg, #00509eff);
+            color: var(--button-text-color, white);
+            border: none;
+        }
+
+        #activateButton:hover {
+            background-color: var(--button-hover-bg, #0077ccff);
+        }
+            
+    </style>
+
+    <div class="analyse-widget">
+        <div class="input-container">
+            <button id="activateButton">Agent Analysis</button>
+            <select id="modelSelect" class="model-select">
+                <option value="">Loading models...</option>
+            </select>
+        </div>
+        <div class="chat-container" id="chat-container">
+            <!-- Chat messages will be appended here -->
+        </div>
+        
+    </div>
+`
+
+let temp = ` <div class="chat-row">
+                <div class="chat-bubble user-chat">
+                    Hi there!
+                </div>
+            </div>
+
+             <div class="chat-row">
+                <div class="chat-bubble bot-chat">
+                    <div class="bot-thinking"> 
+                        The user is asking me to be a helpful assistant.
+                        Maybe I should think about how to respond...
+                    </div>
+
+                    <div class="bot-content">
+                        Hello! How can I assist you today?
+                    </div>
+                </div>
+            </div>`
+
+
+class AnalyseWidget extends HTMLElement {
+
+    static observedAttributes = ['base-url'];
+
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+
+        const envBase = (import.meta?.env?.VITE_API_BASE_URL ?? '').trim();
+        this._baseUrl = (this.getAttribute('base-url') ?? envBase ?? '').trim() || '/api';
+    }
+
+    connectedCallback() {
+        this.shadowRoot.appendChild(analyseWidgetTemplate.content.cloneNode(true));
+        this.chatId = crypto.randomUUID();
+
+        this.chatContainer = this.shadowRoot.getElementById('chat-container');
+
+        this.modelSelection = this.shadowRoot.getElementById('modelSelect');
+        this.fillModels();
+
+        this.button = this.shadowRoot.getElementById('activateButton');
+        this.button.addEventListener('click', () => {
+            this.sendAndHandleMessage();
+        });
+
+    }
+
+    async fillModels(){
+        const response = await fetch(`${this._baseUrl}/api/ai/models`);
+        var json = await response.json();
+        this.modelSelection.innerHTML = '';
+        
+        const defaultModel = json.defaultModel;
+        json.availableModels.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            if(model === defaultModel){
+                option.selected = true;
+            }
+            this.modelSelection.appendChild(option);
+        });
+
+    }
+
+    sendAndHandleMessage() {
+        // Dispatch custom event that parent can listen to
+        this.dispatchEvent(new CustomEvent('analysis-started', {
+            bubbles: true,
+            composed: true,
+            detail: { }
+        }));
+
+        this.button.disabled = true;
+        this.startAndHandleChatStream()
+        .catch(error => {
+            console.error('Error during chat stream:', error);
+        });
+
+    }
+
+    async startAndHandleChatStream(){
+        
+        const botChatRow = document.createElement('div');
+        botChatRow.classList.add('chat-row');
+        const botMessageBubble = document.createElement('div');
+        botMessageBubble.classList.add('chat-bubble', 'bot-chat');
+        botChatRow.appendChild(botMessageBubble);
+        this.chatContainer.appendChild(botChatRow);
+        this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+
+        let currentContentDiv = null;
+        let currentThinkingDiv = null;
+        let currentToolCallDiv = null;
+
+        function onThinkingReceived(chunk){
+            currentToolCallDiv = null;
+            currentContentDiv = null;
+
+            if(!currentThinkingDiv){
+                const thinkingContainerDiv = document.createElement('div');
+                thinkingContainerDiv.classList.add('bot-thinking');
+
+                const collapseButton = document.createElement('div');
+                collapseButton.classList.add('thinking-collapse-button');
+                collapseButton.textContent = 'thinking... (click to expand/collapse)';
+                collapseButton.onclick = (target) => {
+                    const thinkingTextElement = target.currentTarget.closest('.bot-thinking').querySelector('.thinking-text');
+                    if (thinkingTextElement) {
+                        thinkingTextElement.classList.toggle('show');
+                    }
+                };
+
+                currentThinkingDiv = document.createElement('div');
+                currentThinkingDiv.classList.add('thinking-text', 'markdown-replace');
+
+                thinkingContainerDiv.appendChild(collapseButton);
+                thinkingContainerDiv.appendChild(currentThinkingDiv);
+                botMessageBubble.appendChild(thinkingContainerDiv);
+            }
+
+            appendMarkdownChunk(currentThinkingDiv, chunk);
+        }
+
+        function onToolCallReceived(chunk){
+            // TODO
+        }
+
+        function onContentReceived(chunk){
+            currentThinkingDiv = null;
+            currentToolCallDiv = null;
+
+            if(!currentContentDiv){
+                currentContentDiv = document.createElement('div');
+                currentContentDiv.classList.add('bot-content', 'markdown-replace');
+                botMessageBubble.appendChild(currentContentDiv);
+            }
+
+            // Don't trim - preserve all whitespace from backend
+            appendMarkdownChunk(currentContentDiv, chunk);
+        }
+
+        const response = await fetch(`${this._baseUrl}/api/ai/analyse`, {
+            headers: { 
+                'Content-Type': 'application/json',
+                'model' : this.modelSelection.value
+            }
+        });
+
+        function handleEvent(event){
+            // Expecting SSE-ish chunks: "data: {...}\n\n"
+            if (!event.startsWith('data:')) return;
+
+            const data = event.slice('data:'.length).trim();
+            if (!data) return;
+
+            let json;
+            try {
+                json = JSON.parse(data);
+            } catch {
+                return;
+            }
+
+            const chunk = json.chunk ?? '';
+            // Remove the trim check - empty chunks with whitespace are important for markdown
+            if (chunk === '') return;
+
+            switch(json.chunkType){
+                case 'thinking':
+                    onThinkingReceived(String(chunk));
+                    break;
+                case 'tool_call':
+                    onToolCallReceived(String(chunk));
+                    break;
+                case 'content':
+                    onContentReceived(String(chunk));
+                    break;
+            }
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+
+        while (true) {
+            const {done, value} = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, {stream: true});
+
+            const events = buffer.split('\n\n');
+            buffer = events.pop();
+            for (const rawLine of events) {
+                handleEvent(rawLine);
+            }
+
+            // Keep scroll pinned while streaming
+            this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+        }
+
+        // Flush any throttled renders at the end (so final state is correct)
+        botMessageBubble.querySelectorAll('.markdown-replace').forEach(elem => flushMarkdown(elem));
+
+        botMessageBubble.classList.add('complete');
+    }
+}
+
+customElements.define('analyse-widget', AnalyseWidget);

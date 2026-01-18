@@ -3,7 +3,6 @@ package nhl.stenden.spoordock.services;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
-
 import lombok.extern.slf4j.Slf4j;
 import nhl.stenden.spoordock.backgroundprocessor.BackgroundProcessor;
 import nhl.stenden.spoordock.database.BuildingPolygonEmbeddingRepository;
@@ -15,6 +14,8 @@ import nhl.stenden.spoordock.services.mappers.BuildingEmbeddingMapper;
 @Slf4j
 @Component
 public class BuildingEmbeddingService {
+
+    private static final int EMBEDDING_DIMENSIONS = 768;
 
     private final BackgroundProcessor backgroundProcessor;
     private final OllamaEmbeddingClient ollamaEmbeddingClient;
@@ -34,7 +35,7 @@ public class BuildingEmbeddingService {
 
     public List<String> getBuildingsBasedOnDescription(String prompt, int limit){
         try{
-            float[] promptEmbedding = ollamaEmbeddingClient.createEmbedding(prompt);
+            float[] promptEmbedding = ollamaEmbeddingClient.createEmbedding(prompt, EMBEDDING_DIMENSIONS);
             return buildingPolygonEmbeddingRepository
             .findNearestByEmbedding(promptEmbedding, limit)
             .stream().map(x->x.getEmbeddingSource()).toList();
@@ -61,7 +62,7 @@ public class BuildingEmbeddingService {
             var building = buildingOpt.get();
             
             String source = new BuildingEmbeddingMapper().toEmbeddableText(building);
-            float[] embedding = ollamaEmbeddingClient.createEmbedding(source);
+            float[] embedding = ollamaEmbeddingClient.createEmbedding(source, EMBEDDING_DIMENSIONS);
             String modelName = ollamaEmbeddingClient.getEmbeddingModelName();
 
             BuildingPolygonEmbeddingEntity embeddingEntity = new BuildingPolygonEmbeddingEntity(

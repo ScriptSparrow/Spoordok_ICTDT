@@ -34,9 +34,9 @@ public class OllamaEmbeddingClient {
         return EMBEDDING_MODEL_NAME;
     }
 
-    public float[] createEmbedding(String text) {
+    public float[] createEmbedding(String text, int dimensions) {
         try {
-            var body = new EmbeddingRequestBody(EMBEDDING_MODEL_NAME, text);
+            var body = new EmbeddingRequestBody(EMBEDDING_MODEL_NAME, text, dimensions);
 
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(baseUrl.resolve("/api/embed"))
@@ -55,8 +55,9 @@ public class OllamaEmbeddingClient {
 
             log.info("Embedding creation took: {} ms", sw.getTotalTimeMillis());
 
-            EmbeddingResponseBody responseBody = objectMapper.readValue(response.body(), EmbeddingResponseBody.class);
-            return responseBody.getEmbedding()[0];
+            String responseContent = response.body();
+            EmbeddingResponseBody responseBody = objectMapper.readValue(responseContent, EmbeddingResponseBody.class);
+            return responseBody.getEmbeddings()[0];
         } catch (Exception ex) {
             throw new RuntimeException("Failed to create embedding", ex);
         }

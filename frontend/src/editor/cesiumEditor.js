@@ -72,7 +72,7 @@ export class CesiumEditor {
      */
     setMode(mode) {
         this.mode = mode.toUpperCase();
-        console.log('CesiumEditor: Standje gewisseld naar', this.mode);
+        
         this.cleanupDrawing();
         
         // Notify listeners about mode change
@@ -130,7 +130,12 @@ export class CesiumEditor {
      * Handige sneltoetsen zoals ESC en Ctrl+Z.
      */
     initKeyboard() {
+        this.activeKeys = new Set();
+        this.rotationInterval = null;
+
         window.addEventListener('keydown', (e) => {
+            this.activeKeys.add(e.key);
+
             if (e.key === 'Escape') {
                 if (this.mode === 'DRAW' || this.mode === 'DRAW_ROAD') {
                     this.setMode('IDLE');
@@ -145,7 +150,132 @@ export class CesiumEditor {
             } else if (e.ctrlKey && e.key.toLowerCase() === 'y') {
                 this.redo();
             }
+
+            this.handleRotation();
         });
+
+        window.addEventListener('keyup', (e) => {
+            this.activeKeys.delete(e.key);
+            this.handleRotation();
+            
+            // On key release of rotation keys, persist once
+            if (['a', 'd', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                this.persistRotation();
+            }
+        });
+    }
+
+    /**
+     * Start of stopt de continue rotatie op basis van ingedrukte toetsen.
+     */
+    handleRotation() {
+        const rotateLeft = this.activeKeys.has('a') || this.activeKeys.has('A') || this.activeKeys.has('ArrowLeft');
+        const rotateRight = this.activeKeys.has('d') || this.activeKeys.has('D') || this.activeKeys.has('ArrowRight');
+
+        if ((rotateLeft || rotateRight) && !(rotateLeft && rotateRight)) {
+            if (!this.rotationInterval) {
+                this.startRotation(rotateLeft ? -1 : 1);
+            } else {
+                // Als we al aan het roteren waren, maar de richting is veranderd
+                this.stopRotation();
+                this.startRotation(rotateLeft ? -1 : 1);
+            }
+        } else {
+            this.stopRotation();
+        }
+    }
+
+    /**
+     * Start het interval voor continue rotatie.
+     */
+    startRotation(direction) {
+        if (this.mode !== 'EDIT' || !this.selectedId) return;
+
+        const rotationSpeed = 2.0; // Graden per frame (ongeveer)
+        
+        this.rotationInterval = setInterval(() => {
+            if (this.mode !== 'EDIT' || !this.selectedId) {
+                this.stopRotation();
+                return;
+            }
+            this.rotateFeature(this.selectedId, direction * rotationSpeed);
+        }, 16); // ~60fps
+    }
+
+    /**
+     * Stopt de rotatie.
+     */
+    stopRotation() {
+        if (this.rotationInterval) {
+            clearInterval(this.rotationInterval);
+            this.rotationInterval = null;
+        }
+    }
+
+    /**
+     * Roteert een feature om zijn middelpunt.
+     */
+    rotateFeature(id, angleDegrees) {
+        const feature = this.featureStore.getFeature(id);
+        if (!feature) return;
+
+        const angleRad = CesiumMath.toRadians(angleDegrees);
+        
+        // Bereken middelpunt (simpele gemiddelde van coördinaten)
+        let coords;
+        if (feature.geometry.type === 'Polygon') {
+            coords = feature.geometry.coordinates[0];
+        } else if (feature.geometry.type === 'LineString') {
+            coords = feature.geometry.coordinates;
+        } else {
+            return;
+        }
+
+        const center = coords.reduce((acc, curr) => [acc[0] + curr[0], acc[1] + curr[1]], [0, 0])
+                             .map(v => v / coords.length);
+
+        // Roteer elk punt
+        const newCoords = coords.map(p => {
+            const dx = p[0] - center[0];
+            const dy = p[1] - center[1];
+            
+            // We moeten rekening houden met de breedtegraad voor een meer 'natuurlijke' rotatie op een bol,
+            // maar voor kleine gebouwen werkt simpele 2D rotatie op lon/lat vaak acceptabel genoeg.
+            // Voor betere precisie zouden we naar Cartesian3 moeten en terug, maar dat is complexer.
+            const cos = Math.cos(angleRad);
+            const sin = Math.sin(angleRad);
+            
+            return [
+                center[0] + dx * cos - dy * sin,
+                center[1] + dx * sin + dy * cos
+            ];
+        });
+
+        const updates = {
+            geometry: {
+                ...feature.geometry,
+                coordinates: feature.geometry.type === 'Polygon' ? [newCoords] : newCoords
+            }
+        };
+
+        // Update lokaal (store + entity) zonder backend call (voor de snelheid tijdens hold)
+        this.featureStore.updateFeature(id, updates);
+        this.syncEntity(this.featureStore.getFeature(id));
+    }
+
+    /**
+     * Slaat de huidige staat op in de backend.
+     */
+    async persistRotation() {
+        if (!this.selectedId) return;
+        const feature = this.featureStore.getFeature(this.selectedId);
+        if (!feature) return;
+
+        try {
+            await this.api.update(this.selectedId, feature);
+        } catch (err) {
+            
+        }
     }
 
     /**
@@ -181,7 +311,7 @@ export class CesiumEditor {
         }
         
         if (!cartesian) {
-            console.warn('CesiumEditor: Kon geen positie vinden op de kaart bij', position);
+            
             return;
         }
         
@@ -316,7 +446,7 @@ export class CesiumEditor {
         const minPoints = this.mode === 'DRAW' ? 3 : 2;
         if (this.drawingPoints.length < minPoints) {
             const msg = `Niet genoeg punten! Klik minstens ${minPoints} keer.`;
-            console.warn('CesiumEditor:', msg);
+            
             if (this.onMessage) this.onMessage(msg, 'error');
             this.setMode('IDLE');
             return;
@@ -448,10 +578,10 @@ export class CesiumEditor {
     pickFeature(position) {
         const picked = this.viewer.scene.pick(position);
         if (picked && picked.id instanceof Entity) {
-            console.log('CesiumEditor: Feature aangeklikt', picked.id.id);
+            
             this.selectFeature(picked.id.id);
         } else {
-            if (this.selectedId) console.log('CesiumEditor: Naast de pot gepiest, selectie leeg');
+            if (this.selectedId) 
             this.clearSelection();
         }
     }
@@ -462,8 +592,10 @@ export class CesiumEditor {
     selectFeature(id) {
         if (this.selectedId === id) return;
         
-        console.log('CesiumEditor: Selecteer feature', id);
+        
         if (this.selectedId) {
+            this.stopRotation();
+            this.persistRotation();
             this.updateEntityHighlight(this.selectedId, false);
         }
         this.selectedId = id;
@@ -476,7 +608,9 @@ export class CesiumEditor {
      */
     clearSelection() {
         if (this.selectedId) {
-            console.log('CesiumEditor: Selectie gewist', this.selectedId);
+            
+            this.stopRotation();
+            this.persistRotation();
             this.updateEntityHighlight(this.selectedId, false);
         }
         this.selectedId = null;
@@ -558,10 +692,10 @@ export class CesiumEditor {
      * Zorgt dat de Cesium entity klopt met onze data.
      */
     syncEntity(feature) {
-        console.log('CesiumEditor: Entity synchroniseren', feature.id, feature);
+        
         let entity = this.viewer.entities.getById(feature.id);
         if (!entity) {
-            console.log('CesiumEditor: Nieuwe Cesium entity maken voor', feature.id);
+            
             entity = this.viewer.entities.add({ id: feature.id });
         }
 
@@ -573,7 +707,7 @@ export class CesiumEditor {
             const flattened = feature.geometry.coordinates[0].reduce((acc, val) => acc.concat(val), []);
             
             if (flattened.length < 6 || flattened.some(v => isNaN(v))) {
-                console.error('CesiumEditor: Ongeldige polygon coördinaten', flattened);
+                
                 return;
             }
 
@@ -593,7 +727,7 @@ export class CesiumEditor {
             const flattened = feature.geometry.coordinates.reduce((acc, val) => acc.concat(val), []);
             
             if (flattened.length < 4 || flattened.some(v => isNaN(v))) {
-                console.error('CesiumEditor: Ongeldige weg coördinaten', flattened);
+                
                 return;
             }
             console.log('width: ' + feature.width);
@@ -626,7 +760,7 @@ export class CesiumEditor {
      * Past de actie echt toe in de store en backend.
      */
     async apply(command) {
-        console.log('CesiumEditor: Actie toepassen', command);
+        
         try {
             switch (command.type) {
                 case 'CREATE':
@@ -657,7 +791,9 @@ export class CesiumEditor {
                     break;
             }
         } catch (err) {
-            console.error('CesiumEditor: Toepassen mislukt', err);
+            
+            // We gooien de error door zodat de UI kan reageren
+            throw err;
         }
     }
 
@@ -671,7 +807,7 @@ export class CesiumEditor {
             return;
         }
 
-        console.log('CesiumEditor: Undo actie', cmd);
+        
         try {
             switch (cmd.type) {
                 case 'CREATE':
