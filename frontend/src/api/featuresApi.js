@@ -98,26 +98,28 @@ export class FeaturesApi {
         }
         try {
             const isPoly = feature.geometry.type === 'Polygon';
+            const url = isPoly ? `${this.baseUrl}/api/buildings/building` : `${this.baseUrl}/api/roads`;
             
-            // Let op: Backend heeft op dit moment blijkbaar geen POST voor roads...
-            if (!isPoly) {
-                console.warn('FeaturesApi: Backend heeft nog geen POST voor wegen! We doen het lokaal.');
-                this.localStore.set(feature.id, JSON.parse(JSON.stringify(feature)));
-                return feature;
+            let body;
+            if (isPoly) {
+                body = {
+                    name: feature.meta.name || `Gebouw`,
+                    description: feature.meta.description || 'Nieuw getekend gebouw',
+                    buildingType: feature.meta.typeId ? { buildingTypeId: feature.meta.typeId } : null,
+                    height: feature.height,
+                    polygon: {
+                        coordinates: feature.geometry.coordinates[0].map(c => ({ x: c[0], y: c[1], z: 0 }))
+                    }
+                };
+            } else {
+                body = {
+                    id: feature.id,
+                    roadType: { roadTypeId: 1 }, // Default road type if none provided
+                    roadDescription: feature.meta.description || 'Nieuwe weg',
+                    width: Math.round(feature.width || 5),
+                    coordinates: feature.geometry.coordinates.map(c => ({ x: c[0], y: c[1], z: 0 }))
+                };
             }
-
-            const url = `${this.baseUrl}/api/buildings/building`;
-            
-            // PR1: buildingId verwijderd - database genereert de UUID
-            const body = {
-                name: feature.meta.name || `Gebouw`,
-                description: feature.meta.description || 'Nieuw getekend gebouw',
-                buildingType: feature.meta.typeId ? { buildingTypeId: feature.meta.typeId } : null,
-                height: feature.height,
-                polygon: {
-                    coordinates: feature.geometry.coordinates[0].map(c => ({ x: c[0], y: c[1], z: 0 }))
-                }
-            };
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -126,24 +128,34 @@ export class FeaturesApi {
             });
             
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-            const data = await response.json();
             
-            // PR1: Retourneer genormaliseerde feature met database-gegenereerde UUID
-            return {
-                id: data.buildingId,  // Database-gegenereerde UUID
-                featureType: feature.featureType,
-                height: data.height,
-                width: feature.width,
-                geometry: {
-                    type: 'Polygon',
-                    coordinates: [data.polygon.coordinates.map(c => [c.x, c.y])]
-                },
-                meta: { 
-                    ...feature.meta, 
-                    name: data.name, 
-                    description: data.description 
+            // Road response might be a string "Road segment created successfully"
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                const data = await response.json();
+                
+                if (isPoly) {
+                    return {
+                        id: data.buildingId,
+                        featureType: feature.featureType,
+                        height: data.height,
+                        width: feature.width,
+                        geometry: {
+                            type: 'Polygon',
+                            coordinates: [data.polygon.coordinates.map(c => [c.x, c.y])]
+                        },
+                        meta: { 
+                            ...feature.meta, 
+                            name: data.name, 
+                            description: data.description 
+                        }
+                    };
                 }
-            };
+                return data;
+            } else {
+                // Return original feature if response is text
+                return feature;
+            }
         } catch (error) {
             console.error('FeaturesApi.create faalde:', error);
             throw error;
@@ -154,33 +166,35 @@ export class FeaturesApi {
      * Updatet een bestaande feature.
      */
     async update(id, feature) {
-        console.log('FeaturesApi: Feature updaten', id, feature);
         if (this.useLocal) {
             this.localStore.set(id, JSON.parse(JSON.stringify(feature)));
             return feature;
         }
         try {
             const isPoly = feature.geometry.type === 'Polygon';
+            const url = isPoly ? `${this.baseUrl}/api/buildings/building/${id}` : `${this.baseUrl}/api/roads`;
             
-            // Backend heeft ook geen PUT voor wegen blijkbaar
-            if (!isPoly) {
-                console.warn('FeaturesApi: Backend heeft geen PUT voor wegen! Lokaal bijgewerkt.');
-                this.localStore.set(id, JSON.parse(JSON.stringify(feature)));
-                return feature;
+            let body;
+            if (isPoly) {
+                body = {
+                    buildingId: feature.id,
+                    name: feature.meta.name || `Gebouw ${feature.id.substring(0, 4)}`,
+                    description: feature.meta.description || 'Gebouw aangepast',
+                    buildingType: feature.meta.typeId ? { buildingTypeId: feature.meta.typeId } : null,
+                    height: feature.height,
+                    polygon: {
+                        coordinates: feature.geometry.coordinates[0].map(c => ({ x: c[0], y: c[1], z: 0 }))
+                    }
+                };
+            } else {
+                body = {
+                    id: feature.id,
+                    roadType: { roadTypeId: 1 },
+                    roadDescription: feature.meta.description || 'Weg aangepast',
+                    width: Math.round(feature.width || 5),
+                    coordinates: feature.geometry.coordinates.map(c => ({ x: c[0], y: c[1], z: 0 }))
+                };
             }
-
-            const url = `${this.baseUrl}/api/buildings/building/${id}`;
-            
-            const body = {
-                buildingId: feature.id,
-                name: feature.meta.name || `Gebouw ${feature.id.substring(0, 4)}`,
-                description: feature.meta.description || 'Gebouw aangepast',
-                buildingType: feature.meta.typeId ? { buildingTypeId: feature.meta.typeId } : null,
-                height: feature.height,
-                polygon: {
-                    coordinates: feature.geometry.coordinates[0].map(c => ({ x: c[0], y: c[1], z: 0 }))
-                }
-            };
 
             const response = await fetch(url, {
                 method: 'PUT',
@@ -189,8 +203,12 @@ export class FeaturesApi {
             });
             
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-            const data = await response.json();
-            return data;
+            
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                return await response.json();
+            }
+            return feature;
         } catch (error) {
             console.error('FeaturesApi.update mislukt:', error);
             throw error;
@@ -207,17 +225,18 @@ export class FeaturesApi {
             return true;
         }
         try {
-            // Wegverwijdering ook nog niet in de backend
+            const url = isPolygon ? `${this.baseUrl}/api/buildings/building/${id}` : `${this.baseUrl}/api/roads`;
+            
+            const options = {
+                method: 'DELETE'
+            };
+
             if (!isPolygon) {
-                console.warn('FeaturesApi: Backend kan nog geen wegen deleten! Lokaal gedaan.');
-                this.localStore.delete(id);
-                return true;
+                options.headers = { 'Content-Type': 'application/json' };
+                options.body = JSON.stringify({ id: id });
             }
 
-            const url = `${this.baseUrl}/api/buildings/building/${id}`;
-            const response = await fetch(url, {
-                method: 'DELETE'
-            });
+            const response = await fetch(url, options);
             
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             return true;

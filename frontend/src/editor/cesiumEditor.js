@@ -45,6 +45,48 @@ export class CesiumEditor {
 
         this.initEvents();
         this.initKeyboard();
+        this.initModal();
+    }
+
+    /**
+     * Initialiseert de modal voor naam en omschrijving.
+     */
+    initModal() {
+        const modal = document.getElementById('feature-modal');
+        const saveBtn = document.getElementById('modal-save');
+        const nameInput = document.getElementById('modal-name');
+        const descInput = document.getElementById('modal-description');
+
+        if (!saveBtn) return;
+
+        saveBtn.onclick = async () => {
+            if (this.pendingFeature) {
+                const name = nameInput.value || `Gebouw ${this.pendingFeature.id.substring(0, 4)}`;
+                const description = descInput.value || 'Nieuw getekend gebouw';
+
+                this.pendingFeature.meta.name = name;
+                this.pendingFeature.meta.description = description;
+
+                try {
+                    await this.execute({
+                        type: 'CREATE',
+                        feature: this.pendingFeature
+                    });
+
+                    // Selecteer em meteen even voor de feedback
+                    const createdId = this.pendingFeature.id;
+                    setTimeout(() => this.selectFeature(createdId), 100);
+
+                    if (this.onMessage) this.onMessage('Feature succesvol opgeslagen!', 'success');
+                } catch (err) {
+                    console.error('CesiumEditor: Opslaan mislukt', err);
+                    if (this.onMessage) this.onMessage('Opslaan mislukt. Controleer de console voor details.', 'error');
+                } finally {
+                    this.pendingFeature = null;
+                    modal.classList.remove('active');
+                }
+            }
+        };
     }
 
     /**
@@ -148,7 +190,13 @@ export class CesiumEditor {
      * Handige sneltoetsen zoals ESC en Ctrl+Z.
      */
     initKeyboard() {
+        this.activeKeys = new Set();
+        this.rotationInterval = null;
+        this.rotationStartFeature = null;
+
         window.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
             if (e.key === 'Escape') {
                 if (this.mode === 'DRAW' || this.mode === 'DRAW_ROAD') {
                     this.setMode('IDLE');
@@ -158,8 +206,147 @@ export class CesiumEditor {
                 else this.undo();
             } else if (e.ctrlKey && e.key.toLowerCase() === 'y') {
                 this.redo();
+            } else if (this.selectedId) {
+                const key = e.key.toLowerCase();
+                if (key === 'arrowleft' || key === 'a' || key === 'arrowright' || key === 'd') {
+                    // Check of het een polygoon is voordat we de rotatie starten
+                    const feature = this.featureStore.getFeature(this.selectedId);
+                    if (feature && feature.geometry.type === 'Polygon') {
+                        if (!this.rotationStartFeature) {
+                            this.rotationStartFeature = JSON.parse(JSON.stringify(feature));
+                        }
+                        this.activeKeys.add(key);
+                        this.startRotation();
+                    }
+                }
             }
         });
+
+        window.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            this.activeKeys.delete(key);
+            if (this.activeKeys.size === 0) {
+                this.stopRotation();
+            }
+        });
+    }
+
+    startRotation() {
+        if (this.rotationInterval) return;
+        
+        this.rotationInterval = setInterval(() => {
+            let rotation = 0;
+            if (this.activeKeys.has('arrowleft') || this.activeKeys.has('a')) {
+                rotation -= 2;
+            }
+            if (this.activeKeys.has('arrowright') || this.activeKeys.has('d')) {
+                rotation += 2;
+            }
+
+            if (rotation !== 0) {
+                this.rotateSelectedFeature(rotation, false);
+            }
+        }, 50);
+    }
+
+    stopRotation() {
+        if (this.rotationInterval) {
+            clearInterval(this.rotationInterval);
+            this.rotationInterval = null;
+            
+            // Na het stoppen van de rotatie, synchroniseren we met de backend
+            const feature = this.featureStore.getFeature(this.selectedId);
+            if (feature && this.rotationStartFeature) {
+                const oldFeature = this.rotationStartFeature;
+                const newFeature = JSON.parse(JSON.stringify(feature));
+                this.rotationStartFeature = null;
+
+                // We voeren de update uit. Omdat we de geometry al lokaal hebben aangepast,
+                // hoeven we de entity niet opnieuw te syncen in de 'apply' stap als we dat niet willen,
+                // maar updateSelectedFeature regelt dit normaal gesproken via execute.
+                
+                // Om te voorkomen dat we een nieuwe undo-stap maken met de 'tussenstand' als oud,
+                // gebruiken we een aangepaste aanroep die de ECHTE oude toestand (voor de rotatie) gebruikt.
+                this.finalizeRotation(oldFeature, newFeature);
+            }
+        }
+    }
+
+    /**
+     * Rondt de rotatie af en stuurt de wijziging naar de backend.
+     */
+    async finalizeRotation(oldFeature, newFeature) {
+        try {
+            await this.execute({
+                type: 'UPDATE',
+                id: oldFeature.id,
+                oldFeature: oldFeature,
+                newFeature: newFeature
+            });
+            console.log('CesiumEditor: Rotatie succesvol gesynchroniseerd met backend');
+        } catch (err) {
+            console.error('CesiumEditor: Synchroniseren rotatie mislukt', err);
+            if (this.onMessage) this.onMessage('Synchroniseren mislukt.', 'error');
+            
+            // Bij fout herstellen naar de toestand voor de rotatie
+            this.featureStore.updateFeature(oldFeature.id, oldFeature);
+            this.syncEntity(oldFeature);
+            if (this.onSelectionChange) this.onSelectionChange(oldFeature);
+        }
+    }
+
+    /**
+     * Roteert de geselecteerde feature om zijn middelpunt.
+     */
+    async rotateSelectedFeature(degrees, shouldSync = true) {
+        if (!this.selectedId) return;
+        const feature = this.featureStore.getFeature(this.selectedId);
+        if (!feature || feature.geometry.type !== 'Polygon') return;
+
+        const coords = feature.geometry.coordinates[0];
+        if (coords.length === 0) return;
+
+        // 1. Bereken het middelpunt (simpel gemiddelde van lon/lat)
+        let sumLon = 0;
+        let sumLat = 0;
+        coords.forEach(p => {
+            sumLon += p[0];
+            sumLat += p[1];
+        });
+        const centerLon = sumLon / coords.length;
+        const centerLat = sumLat / coords.length;
+
+        // 2. Roteer elk punt om het middelpunt
+        const radians = (degrees * Math.PI) / 180;
+        const cos = Math.cos(radians);
+        const sin = Math.sin(radians);
+
+        const newCoords = coords.map(p => {
+            const lon = p[0] - centerLon;
+            const lat = p[1] - centerLat;
+
+            const rotatedLon = lon * cos - lat * sin;
+            const rotatedLat = lon * sin + lat * cos;
+
+            const res = [rotatedLon + centerLon, rotatedLat + centerLat];
+            if (p.length > 2) res.push(p[2]); // behoud hoogte indien aanwezig
+            return res;
+        });
+
+        // 3. Update de feature
+        const updatedGeometry = {
+            ...feature.geometry,
+            coordinates: [newCoords]
+        };
+
+        if (shouldSync) {
+            await this.updateSelectedFeature({ geometry: updatedGeometry });
+        } else {
+            // Alleen lokale update voor soepele rotatie
+            feature.geometry = updatedGeometry;
+            this.featureStore.updateFeature(this.selectedId, feature);
+            this.syncEntity(feature);
+        }
     }
 
     /**
@@ -312,15 +499,34 @@ export class CesiumEditor {
         }
 
         try {
-            await this.execute({
-                type: 'CREATE',
-                feature: feature
-            });
+            if (geomType === 'Polygon') {
+                // Toon modal voor Polygons
+                this.pendingFeature = feature;
+                const modal = document.getElementById('feature-modal');
+                const nameInput = document.getElementById('modal-name');
+                const descInput = document.getElementById('modal-description');
+                
+                if (modal) {
+                    nameInput.value = '';
+                    descInput.value = '';
+                    modal.classList.add('active');
+                    nameInput.focus();
+                } else {
+                    // Fallback als modal niet gevonden wordt
+                    await this.execute({ type: 'CREATE', feature: feature });
+                }
+            } else {
+                // Wegen worden direct opgeslagen
+                await this.execute({
+                    type: 'CREATE',
+                    feature: feature
+                });
 
-            // Selecteer em meteen even voor de feedback
-            setTimeout(() => this.selectFeature(feature.id), 100);
+                // Selecteer em meteen even voor de feedback
+                setTimeout(() => this.selectFeature(feature.id), 100);
 
-            if (this.onMessage) this.onMessage('Feature succesvol opgeslagen!', 'success');
+                if (this.onMessage) this.onMessage('Feature succesvol opgeslagen!', 'success');
+            }
         } catch (err) {
             console.error('CesiumEditor: Opslaan mislukt', err);
             if (this.onMessage) this.onMessage('Opslaan mislukt. Controleer de console voor details.', 'error');
@@ -497,7 +703,6 @@ export class CesiumEditor {
      * Zorgt dat de Cesium entity klopt met onze data.
      */
     syncEntity(feature) {
-        console.log('CesiumEditor: Entity synchroniseren', feature.id, feature);
         let entity = this.viewer.entities.getById(feature.id);
         if (!entity) {
             console.log('CesiumEditor: Nieuwe Cesium entity maken voor', feature.id);
@@ -516,14 +721,14 @@ export class CesiumEditor {
         }
 
         if (feature.geometry.type === 'Polygon') {
-            const flattened = feature.geometry.coordinates[0].reduce((acc, val) => acc.concat(val), []);
+            const flattened = feature.geometry.coordinates[0].flat();
             
-            if (flattened.length < 6 || flattened.some(v => isNaN(v))) {
+            if (flattened.length < 6 || flattened.some(v => v === undefined || isNaN(v))) {
                 console.error('CesiumEditor: Ongeldige polygon coördinaten', flattened);
                 return;
             }
 
-            const positions = Cartesian3.fromDegreesArray(flattened);
+            const positions = Cartesian3.fromDegreesArray(flattened.filter(v => v !== undefined));
             entity.polygon = {
                 hierarchy: new PolygonHierarchy(positions),
                 material: color.withAlpha(0.6),
@@ -536,14 +741,14 @@ export class CesiumEditor {
             };
             entity.polyline = undefined;
         } else if (feature.geometry.type === 'LineString') {
-            const flattened = feature.geometry.coordinates.reduce((acc, val) => acc.concat(val), []);
+            const flattened = feature.geometry.coordinates.flat();
             
-            if (flattened.length < 4 || flattened.some(v => isNaN(v))) {
+            if (flattened.length < 4 || flattened.some(v => v === undefined || isNaN(v))) {
                 console.error('CesiumEditor: Ongeldige weg coördinaten', flattened);
                 return;
             }
 
-            const positions = Cartesian3.fromDegreesArray(flattened);
+            const positions = Cartesian3.fromDegreesArray(flattened.filter(v => v !== undefined));
             entity.polyline = {
                 positions: positions,
                 width: feature.width || 5,

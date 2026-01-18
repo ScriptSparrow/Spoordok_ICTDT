@@ -34,7 +34,6 @@ export class FeatureStore {
      * Update een bestaande feature met nieuwe data.
      */
     updateFeature(id, updates) {
-        console.log('FeatureStore: Feature geüpdatet', id, updates);
         const feature = this.features.get(id);
         if (feature) {
             Object.assign(feature, updates);

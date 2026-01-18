@@ -112,6 +112,24 @@
 
     <!-- Toasts -->
     <div id="toast-container"></div>
+
+    <!-- Modal for Name and Description -->
+    <div id="feature-modal" class="modal">
+        <div class="modal-content">
+            <h3>Nieuwe feature details</h3>
+            <label class="field">
+                <span>Naam</span>
+                <input id="modal-name" type="text" placeholder="Bijv. Woongebouw A" />
+            </label>
+            <label class="field">
+                <span>Omschrijving</span>
+                <textarea id="modal-description" rows="3" placeholder="Bijv. Een modern gebouw met 20 appartementen"></textarea>
+            </label>
+            <div class="modal-actions">
+                <button id="modal-save" class="btn primary">Opslaan</button>
+            </div>
+        </div>
+    </div>
 </div>
 <script type="module" src="/src/app.js"></script>
 </body>
