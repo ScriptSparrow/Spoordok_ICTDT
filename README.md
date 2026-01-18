@@ -17,7 +17,8 @@ Om het project te laten draaien moet je de volgende stappen zetten:
 
    geteste modellen: 
      - `qwen3:8b`
- 
+    (kleinere modellen gaan niet goed om met de benodigde tool calls.)
+
    run `ollama list` om alle modellen te zien.
 
 4. Hierna is de applicatie beschikbaar op: 
