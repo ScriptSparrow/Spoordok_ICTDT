@@ -141,6 +141,7 @@ export class CesiumEditor {
     }
 
     /**
+<<<<<<< HEAD
      * Berekent de afstand tussen twee punten en geeft een leesbare string terug.
      */
     calculateDistance(point1, point2) {
@@ -163,6 +164,8 @@ export class CesiumEditor {
     }
 
     /**
+=======
+>>>>>>> origin/main
      * Voegt een punt toe tijdens het tekenen.
      */
     addDrawingPoint(position) {
@@ -177,6 +180,7 @@ export class CesiumEditor {
             return;
         }
         
+<<<<<<< HEAD
         // Als we minstens één vorig punt hebben, maak een label voor het voltooide segment
         if (this.drawingPoints.length > 0) {
             const prevPoint = this.drawingPoints[this.drawingPoints.length - 1];
@@ -201,6 +205,8 @@ export class CesiumEditor {
             this.distanceLabels.push(label);
         }
         
+=======
+>>>>>>> origin/main
         console.log('CesiumEditor: Puntje gezet', cartesian);
         this.drawingPoints.push(cartesian);
         
