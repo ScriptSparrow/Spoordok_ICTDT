@@ -135,6 +135,7 @@ async function init() {
                     const option = document.createElement('option');
                     option.value = type.buildingTypeId;  // UUID als value
                     option.textContent = type.labelName;  // Naam als tekst
+                    option.dataset.color = type.color;  // Kleur voor directe toewijzing bij creatie
                     selectType.appendChild(option);
                 });
         }
