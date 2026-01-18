@@ -174,7 +174,7 @@ async function init() {
                     meta: updatedMeta 
                 });
                 
-                console.log(`Gebouwtype veranderd naar: ${newTypeId}, kleur: ${newColor}`);
+                
             }
         };
     }
@@ -247,7 +247,7 @@ async function init() {
                 });
         }
     } catch (e) {
-        console.warn('Kon gebouwtypes niet laden:', e);
+        
         // Als het niet lukt, laat de placeholder staan
     }
 
@@ -263,7 +263,7 @@ async function init() {
         // Statistieken panel bijwerken na het laden van features
         updateStatsPanel();
     } catch (e) {
-        console.warn('Backend niet gevonden, we gaan lokaal verder');
+        
         showToast('Server niet bereikbaar - we slaan het lokaal voor je op', 'error');
     }
 

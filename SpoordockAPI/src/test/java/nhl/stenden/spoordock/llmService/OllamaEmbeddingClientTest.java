@@ -45,7 +45,7 @@ public class OllamaEmbeddingClientTest {
         when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
             .thenReturn(httpResponse);
 
-        float[] result = client.createEmbedding("test text");
+        float[] result = client.createEmbedding("test text", 768);
 
         assertNotNull(result);
         assertArrayEquals(new float[]{0.1f, 0.2f, 0.3f}, result, 0.001f);
@@ -60,7 +60,7 @@ public class OllamaEmbeddingClientTest {
             .thenReturn(httpResponse);
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            client.createEmbedding("test text");
+            client.createEmbedding("test text", 768);
         });
 
         assertTrue(exception.getMessage().contains("Failed to create embedding"));
@@ -72,7 +72,7 @@ public class OllamaEmbeddingClientTest {
             .thenThrow(new RuntimeException("Network error"));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            client.createEmbedding("test text");
+            client.createEmbedding("test text", 768);
         });
 
         assertTrue(exception.getMessage().contains("Failed to create embedding"));
@@ -91,7 +91,7 @@ public class OllamaEmbeddingClientTest {
             .thenReturn(httpResponse);
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            client.createEmbedding("test text");
+            client.createEmbedding("test text", 768);
         });
 
         assertTrue(exception.getMessage().contains("Failed to create embedding"));
