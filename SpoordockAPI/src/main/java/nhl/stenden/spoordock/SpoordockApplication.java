@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
 import nhl.stenden.spoordock.llmService.historyManager.IChatHistoryManager;
 import nhl.stenden.spoordock.llmService.historyManager.InMemoryChatHistoryManager;
 
@@ -53,5 +52,6 @@ public class SpoordockApplication {
     public GeometryFactory geometryFactory() {
         return new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING), 4326);
     }
+
 
 }

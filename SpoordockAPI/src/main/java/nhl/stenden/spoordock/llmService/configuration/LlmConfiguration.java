@@ -1,7 +1,4 @@
 package nhl.stenden.spoordock.llmService.configuration;
-
-import java.util.List;
-
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,21 +11,15 @@ import lombok.Setter;
 @Setter
 public class LlmConfiguration {
 
-    private List<ModelConfig> models;
     private String baseUrl;
     private String defaultModel;
     private SystemPrompts systemPrompts;
 
     @Getter @Setter
-    public static class ModelConfig {
-        private String name;
-        private int contextLength;
-    }
-
-    @Getter @Setter
     public static class SystemPrompts {
         private String descriptionHelperPrompt;
         private String defaultChatPrompt;
+        private String analysisPrompt;
 
     }
 }

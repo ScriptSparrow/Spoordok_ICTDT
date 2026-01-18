@@ -12,6 +12,6 @@ import lombok.Setter;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EmbeddingResponseBody {
     private String model;
-    private float[][] embedding;
+    private float[][] embeddings;
 
 }

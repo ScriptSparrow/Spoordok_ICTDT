@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: tim
+      comment: Change embedding vector size from 1536 to 768 dimensions
+      changes:
+        - sql:
+            sql: ALTER TABLE polygon_embeddings ALTER COLUMN embedding TYPE vector(768);
+      rollback:
+        - sql:
+            sql: ALTER TABLE polygon_embeddings ALTER COLUMN embedding TYPE vector(1536);
+
+  - changeSet:
+      id: 2
+      author: tim
+      comment: Recreate ivfflat index for 768-dimension vectors
+      changes:
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_polygon_embeddings_ivfflat;
+        - sql:
+            sql: >
+              CREATE INDEX idx_polygon_embeddings_ivfflat
+              ON polygon_embeddings USING ivfflat (embedding vector_l2_ops)
+              WITH (lists = 100);
+      rollback:
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_polygon_embeddings_ivfflat;
+        - sql:
+            sql: >
+              CREATE INDEX idx_polygon_embeddings_ivfflat
+              ON polygon_embeddings USING ivfflat (embedding vector_l2_ops)
+              WITH (lists = 100);

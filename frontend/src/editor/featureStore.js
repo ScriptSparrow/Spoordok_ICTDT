@@ -54,7 +54,7 @@ export class FeatureStore {
  */
 export function createFeature(type, geometryType, coordinates) {
     return {
-        id: crypto.randomUUID(),
+        id: crypto.randomUUID(),  // Temporary client-side ID, will be synced with backend after creation
         featureType: type,
         height: 10,
         width: type === 'road' ? 5 : 0,

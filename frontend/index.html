@@ -44,6 +44,8 @@
             pointer-events: none;
             z-index: 9999;
         }
+
+        
     </style>
 </head>
 <body>
@@ -54,10 +56,13 @@
         <div class="panel-section">
             <h3>Tools</h3>
             <div class="tool-row">
-                <button id="btn-draw" class="btn" data-tooltip="Teken polygon (klik om punten te plaatsen, klik laatste punt om te sluiten)">Teken polygon</button>
+                <button id="btn-draw" class="btn" data-tooltip="Teken polygon (klik om punten te plaatsen, dubbelklik/Enter/rechtermuisknop om te voltooien)">Teken polygon</button>
                 <button id="btn-road" class="btn" data-tooltip="Teken weg (polyline)">Teken weg</button>
                 <button id="btn-edit" class="btn" data-tooltip="Bewerken: selecteer feature om eigenschappen aan te passen">Bewerken</button>
                 <button id="btn-delete" class="btn" data-tooltip="Verwijder geselecteerde feature">Verwijder</button>
+            </div>
+            <div class="tool-row">
+                <button id="btn-finish-draw" class="btn primary" style="display:none" data-tooltip="Voltooi tekenen (of druk Enter)">Voltooien</button>
             </div>
             <div class="tool-row">
                 <button id="btn-undo" class="btn" data-tooltip="Ongedaan maken (Ctrl+Z)">Undo</button>
@@ -77,36 +82,60 @@
                 <input id="height-range" type="range" min="0" max="100" step="1" value="10" />
                 <input id="height-input" type="number" min="0" max="500" step="1" value="10" />
             </label>
-            <div class="legend">
-                <div><span class="swatch" style="background:#34d399"></span>Groen</div>
-                <div><span class="swatch" style="background:#60a5fa"></span>Water</div>
-                <div><span class="swatch" style="background:#fbbf24"></span>Wonen</div>
-                <div><span class="swatch" style="background:#9ca3af"></span>Industrie</div>
-                <div><span class="swatch" style="background:#a78bfa"></span>Kantoor</div>
-                <div><span class="swatch" style="background:#ffff00"></span>Weg</div>
-            </div>
         </div>
         <div class="panel-section">
             <button id="btn-reset-camera" class="btn" data-tooltip="Reset camera naar Spoordok">Reset camera</button>
+        </div>
+        <div class="panel-section">
+            <h3>Gegevens</h3>
+            <div id="stats-content">
+                <p class="muted">Laden...</p>
+            </div>
+        </div>
+        <div class="panel-section">
+            <h3>Legenda</h3>
+            <div id="legend-content" class="legend">
+                <p class="muted">Laden...</p>
+            </div>
         </div>
     </aside>
 
     <!-- Rechter informatiepaneel -->
     <aside id="right-panel" class="panel right">
+        <div id="right-panel-expander"></div>
         <div class="panel-section">
             <h3>Informatie</h3>
             <div id="info-content">
                 <p>Selecteer een feature om details te zien.</p>
             </div>
         </div>
-        <div class="panel-section">
-            <button id="btn-simulate" class="btn primary" data-tooltip="Start AI-agent simulatie">Simuleer leefkwaliteit</button>
-            <div id="simulation-result" class="muted"></div>
+        <div id="analyse-widget-container">
+             <analyse-widget id="analyse-widget" base-url="http://localhost:6001"></analyse-widget>
         </div>
+       
     </aside>
 
     <!-- Toasts -->
     <div id="toast-container"></div>
+
+    <div></div>
+
+    <!-- CSS-only state -->
+    <input type="checkbox" id="chat-toggle" />
+
+    <!-- Floating button toggles the checkbox -->
+    <label id="chat-toggle-button" for="chat-toggle" aria-label="Open chat">
+        Chat
+    </label>
+
+    <!-- Normal div now (not popover) -->
+    <div id="chat-window-wrapper">
+        <!-- Optional close control inside -->
+        <label class="chat-close" for="chat-toggle" aria-label="Close chat">✕</label>
+        <chat-window base-url="http://localhost:6001"></chat-window>
+    </div>
+
+
 </div>
 <script type="module" src="/src/app.js"></script>
 </body>

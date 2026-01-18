@@ -2,13 +2,78 @@ import { setupViewer, flyToSpoordok } from './cesium/viewer.js';
 import { FeatureStore } from './editor/featureStore.js';
 import { CesiumEditor } from './editor/cesiumEditor.js';
 import { FeaturesApi } from './api/featuresApi.js';
+import './components/chat-window.js';
+import './components/analyse-widget.js';
 import { FeaturesApi as BuildingTypesApi } from './api/buildTypeApi.js';
+import { StatisticsApi } from './api/statisticsApi.js';
 import { showEditModal } from './ui/descriptionModal.js';
 
 // Module-level referenties zodat updateUI() toegang heeft tot de editor
 let editorInstance = null;
 let featureStoreInstance = null;
 let buildingTypesCache = [];  // Cache voor gebouwtypes met kleuren
+let statisticsApiInstance = null;  // API instance voor statistieken
+
+/**
+ * Update het Gegevens panel met statistieken van de backend.
+ */
+async function updateStatsPanel() {
+    const statsContent = document.getElementById('stats-content');
+    const legendContent = document.getElementById('legend-content');
+    if (!statsContent || !statisticsApiInstance) return;
+
+    try {
+        const stats = await statisticsApiInstance.getStatistics();
+
+        statsContent.innerHTML = `
+            <div class="stats-grid">
+                <p><span class="label">Totale kosten:</span> 
+                   <span class="value">€${stats.totalCost.toLocaleString('nl-NL', {maximumFractionDigits: 2})}</span></p>
+                <p><span class="label">Gem. kosten:</span> 
+                   <span class="value">€${stats.averageCost.toLocaleString('nl-NL', {maximumFractionDigits: 2})}</span></p>
+                <p><span class="label">Gem. kosten/bewoner:</span> 
+                   <span class="value">€${stats.averageCostPerCitizen.toLocaleString('nl-NL', {maximumFractionDigits: 2})}</span></p>
+                <p><span class="label">Totale capaciteit:</span> 
+                   <span class="value">${Math.round(stats.totalCapacity)} bewoners</span></p>
+                <p><span class="label">Totale punten:</span> 
+                   <span class="value">${stats.totalPoints.toLocaleString('nl-NL', {maximumFractionDigits: 0})}</span></p>
+                <p><span class="label">Bewoonbare gebouwen:</span> 
+                   <span class="value">${stats.totalLiveableBuildings}</span></p>
+                <p><span class="label">Hoogste gebouw:</span> 
+                   <span class="value">${stats.tallestBuilding.toFixed(1)}m</span></p>
+                <p><span class="label">Laagste gebouw:</span> 
+                   <span class="value">${stats.lowestBuilding.toFixed(1)}m</span></p>
+                <p><span class="label">Gem. hoogte:</span> 
+                   <span class="value">${stats.averageHeight.toFixed(1)}m</span></p>
+            </div>
+        `;
+
+        // Update legenda met building type counts
+        if (legendContent && stats.buildingTypeCounts) {
+            // Mapping van gebouwtype namen naar kleuren (uit buildingTypesCache)
+            const typeColors = {};
+            buildingTypesCache.forEach(type => {
+                typeColors[type.labelName] = type.color;
+            });
+            
+            let legendHtml = '';
+            for (const [typeName, count] of Object.entries(stats.buildingTypeCounts)) {
+                const color = typeColors[typeName] || '#ffffff';
+                legendHtml += `
+                    <div class="legend-item">
+                        <span class="swatch" style="background:${color}"></span>
+                        <span class="legend-label">${typeName}</span>
+                        <span class="legend-count">${count}</span>
+                    </div>
+                `;
+            }
+            legendContent.innerHTML = legendHtml || '<p class="muted">Geen gebouwen</p>';
+        }
+    } catch (error) {
+        statsContent.innerHTML = '<p class="muted">Kon statistieken niet laden</p>';
+        if (legendContent) legendContent.innerHTML = '<p class="muted">Kon legenda niet laden</p>';
+    }
+}
 
 /**
  * Haalt de kleur op voor een gebouwtype UUID.
@@ -33,6 +98,7 @@ async function init() {
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
     const api = new FeaturesApi(apiBaseUrl, useLocal);
     const buildingTypesApi = new BuildingTypesApi(apiBaseUrl);
+    statisticsApiInstance = new StatisticsApi(apiBaseUrl);
     
     // Cesium viewer opstarten
     const viewer = await setupViewer('cesiumContainer');
@@ -45,6 +111,17 @@ async function init() {
 
     // Callback voor berichtjes naar de gebruiker
     editor.onMessage = (msg, type) => showToast(msg, type);
+    
+    // Callback voor wanneer features worden gewijzigd (create/update/delete)
+    editor.onFeatureChange = () => updateStatsPanel();
+    
+    // Callback voor wanneer de editor modus verandert (toon/verberg voltooien knop)
+    const btnFinishDrawRef = document.getElementById('btn-finish-draw');
+    editor.onModeChange = (mode) => {
+        if (btnFinishDrawRef) {
+            btnFinishDrawRef.style.display = (mode === 'DRAW' || mode === 'DRAW_ROAD') ? 'block' : 'none';
+        }
+    };
 
     // Knoppen uit de HTML vissen en acties koppelen
     const btnDraw = document.getElementById('btn-draw');
@@ -54,6 +131,7 @@ async function init() {
     const btnUndo = document.getElementById('btn-undo');
     const btnRedo = document.getElementById('btn-redo');
     const btnReset = document.getElementById('btn-reset-camera');
+    const btnFinishDraw = document.getElementById('btn-finish-draw');
 
     const selectType = document.getElementById('select-type');
     const heightRange = document.getElementById('height-range');
@@ -61,6 +139,7 @@ async function init() {
 
     if (btnDraw) btnDraw.onclick = () => editor.setMode('DRAW');
     if (btnRoad) btnRoad.onclick = () => editor.setMode('DRAW_ROAD');
+    if (btnFinishDraw) btnFinishDraw.onclick = () => editor.finishDrawing();
     if (btnEdit) btnEdit.onclick = () => editor.setMode('EDIT');
     
     if (btnDelete) btnDelete.onclick = () => {
@@ -100,6 +179,34 @@ async function init() {
         };
     }
 
+    const rightPanelExpander = document.getElementById('right-panel-expander');
+    if (rightPanelExpander) {
+        rightPanelExpander.onclick = () => {
+            const rightPanel = document.getElementById('right-panel');
+            if (rightPanel) {
+                rightPanel.classList.toggle('expanded');
+                // Optioneel: verander het pijltje
+                if (rightPanel.classList.contains('expanded')) {
+                    rightPanel.style.setProperty('--rotation', '0deg');
+                } else {
+                    rightPanel.style.setProperty('--rotation', '180deg');
+                }
+            }
+        };
+    }
+
+    // Listen for analysis-started event from analyse-widget
+    const analyseWidget = document.getElementById('analyse-widget');
+    if (analyseWidget) {
+        analyseWidget.addEventListener('analysis-started', (event) => {
+            const rightPanel = document.getElementById('right-panel');
+            if(rightPanel.classList.contains('expanded') === false){
+                rightPanel.classList.add('expanded');
+                rightPanel.style.setProperty('--rotation', '0deg');
+            }
+        });
+    }
+
     // Hoogte of breedte aanpassen met de slider of het getal-vakje
     const handleHeightChange = (e) => {
         const val = parseFloat(e.target.value);
@@ -135,6 +242,7 @@ async function init() {
                     const option = document.createElement('option');
                     option.value = type.buildingTypeId;  // UUID als value
                     option.textContent = type.labelName;  // Naam als tekst
+                    option.dataset.color = type.color;  // Kleur voor directe toewijzing bij creatie
                     selectType.appendChild(option);
                 });
         }
@@ -150,7 +258,10 @@ async function init() {
             featureStore.addFeature(f);
             editor.syncEntity(f);
         });
+        console.log(`Lekker bezig, ${features.length} features ingeladen!`);
         
+        // Statistieken panel bijwerken na het laden van features
+        updateStatsPanel();
     } catch (e) {
         
         showToast('Server niet bereikbaar - we slaan het lokaal voor je op', 'error');
@@ -184,6 +295,34 @@ function updateUI(selected) {
                 <p><span class="label">Functie:</span> <span class="value">${functionName}</span></p>
                 <p><span class="label">${isPoly ? 'Hoogte' : 'Breedte'}:</span> <span class="value">${isPoly ? selected.height : selected.width}m</span></p>
         `;
+        const meta = selected.meta || {};
+        
+        if (isPoly) {
+            infoContent.innerHTML = `
+                <div class="feature-info">
+                    <h3>${meta.name || 'Naamloos Gebouw'}</h3>
+                    <p><em>${meta.description || 'Geen omschrijving'}</em></p>
+                    <hr>
+                    <p><span class="label">ID:</span> <span class="value">${selected.id.substring(0, 8)}...</span></p>
+                    <p><span class="label">Type:</span> <span class="value">${meta.typeLabel || 'Onbekend'}</span></p>
+                    <p><span class="label">Hoogte:</span> <span class="value">${selected.height}m</span></p>
+                    <hr>
+                    <p><span class="label">Kosten:</span> <span class="value">€${meta.costPerUnit || 0} per ${meta.unit || 'eenheid'}</span></p>
+                    <p><span class="label">Bewoners:</span> <span class="value">${meta.residentsPerUnit || 0}</span></p>
+                    <p><span class="label">Punten:</span> <span class="value">${meta.points || 0}</span></p>
+                    <p><span class="label">Bewoonbaar:</span> <span class="value">${meta.inhabitable ? 'Ja' : 'Nee'}</span></p>
+                </div>
+            `;
+        } else {
+            infoContent.innerHTML = `
+                <div class="feature-info">
+                    <p><span class="label">ID:</span> <span class="value">${selected.id.substring(0, 8)}...</span></p>
+                    <p><span class="label">Soort:</span> <span class="value">${selected.geometry.type}</span></p>
+                    <p><span class="label">Functie:</span> <span class="value">${selected.featureType}</span></p>
+                    <p><span class="label">Breedte:</span> <span class="value">${selected.width}m</span></p>
+                </div>
+            `;
+        }
         
         // Voor polygonen: toon extra info (naam, omschrijving) en bewerk knop
         if (isPoly) {

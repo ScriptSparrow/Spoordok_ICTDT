@@ -22,6 +22,9 @@ public class RoadTypeMapper implements Mapper<RoadTypeDTO, RoadTypeTemplate>{
 
     @Override
     public RoadTypeTemplate toEntity(RoadTypeDTO roadTypeDTO) {
+        if (roadTypeDTO == null) {
+            return null;
+        }
         return new RoadTypeTemplate(
                 roadTypeDTO.getId(),
                 roadTypeDTO.getStandardWidth(),

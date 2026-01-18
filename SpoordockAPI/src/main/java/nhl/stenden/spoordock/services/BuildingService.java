@@ -4,18 +4,10 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
-import nhl.stenden.spoordock.backgroundprocessor.BackgroundProcessor;
 import nhl.stenden.spoordock.controllers.dtos.BuildingPolygonDTO;
 import nhl.stenden.spoordock.controllers.dtos.BuildingTypeDTO;
-import nhl.stenden.spoordock.database.BuildingPolygonEmbeddingRepository;
 import nhl.stenden.spoordock.database.BuildingPolygonRepository;
 import nhl.stenden.spoordock.database.BuildingTypeRepository;
-import nhl.stenden.spoordock.database.entities.BuildingPolygonEmbeddingEntity;
-import nhl.stenden.spoordock.database.entities.BuildingPolygonEntity;
-import nhl.stenden.spoordock.llmService.OllamaConnectorService;
-import nhl.stenden.spoordock.llmService.ToolHandling.ToolFunctionCall;
-import nhl.stenden.spoordock.llmService.ToolHandling.ToolParameter;
-import nhl.stenden.spoordock.services.mappers.BuildingEmbeddingMapper;
 import nhl.stenden.spoordock.services.mappers.BuildingPolygonMapper;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,22 +17,18 @@ public class BuildingService {
     private final BuildingPolygonRepository buildingPolygonRepository;
     private final BuildingTypeRepository buildingTypeRepository;
     private final BuildingPolygonMapper buildingPolygonMapper;
-    private final BackgroundProcessor backgroundProcessor;
-    private final OllamaConnectorService ollamaConnectorService;
-    private final BuildingPolygonEmbeddingRepository buildingPolygonEmbeddingRepository;
+    private final BuildingEmbeddingService buildingEmbeddingService;
+    
 
     public BuildingService(BuildingPolygonRepository buildingPolygonRepository, 
                 BuildingTypeRepository buildingTypeRepository, 
-                BackgroundProcessor backgroundProcessor,
-                OllamaConnectorService ollamaConnectorService,
-                BuildingPolygonEmbeddingRepository buildingPolygonEmbeddingRepository,
-                BuildingPolygonMapper buildingPolygonMapper) {
+                BuildingEmbeddingService buildingEmbeddingService,
+                BuildingPolygonMapper buildingPolygonMapper
+            ) {
         this.buildingPolygonRepository = buildingPolygonRepository;
         this.buildingTypeRepository = buildingTypeRepository;
-        this.backgroundProcessor = backgroundProcessor;
-        this.ollamaConnectorService = ollamaConnectorService;
-        this.buildingPolygonEmbeddingRepository = buildingPolygonEmbeddingRepository;
         this.buildingPolygonMapper = buildingPolygonMapper;
+        this.buildingEmbeddingService = buildingEmbeddingService;
     }
 
     public List<BuildingPolygonDTO> getBuildingPolygons(boolean embedTypes){
@@ -85,7 +73,7 @@ public class BuildingService {
 
         var savedEntity = buildingPolygonRepository.save(entity);
         // Geef alleen de ID door aan de achtergrondtaak om race conditions te voorkomen
-        scheduleEmbeddingTask(savedEntity.getBuildingId());
+        buildingEmbeddingService.scheduleEmbeddingTask(savedEntity.getBuildingId());
         return buildingPolygonMapper.toDTO(savedEntity);
     }
 
@@ -129,7 +117,7 @@ public class BuildingService {
         // Nu doet save() een UPDATE omdat isNew=false (na @PostLoad)
         var savedEntity = buildingPolygonRepository.save(existingEntity);
         // Geef alleen de ID door aan de achtergrondtaak om race conditions te voorkomen
-        scheduleEmbeddingTask(savedEntity.getBuildingId());
+        buildingEmbeddingService.scheduleEmbeddingTask(savedEntity.getBuildingId());
         return buildingPolygonMapper.toDTO(savedEntity);
     }
 
@@ -147,63 +135,4 @@ public class BuildingService {
             return Optional.empty();
         }
     }
-
-    /**
-     * Plant een achtergrondtaak om embeddings te genereren voor een gebouw.
-     * Het maken van embeddings duurt lang, daarom doen we dit op de achtergrond.
-     * 
-     * We geven alleen de ID door (niet de hele entity) om race conditions te voorkomen.
-     * De achtergrondtaak haalt verse data op uit de database, zodat:
-     * - Lazy-loaded relaties correct worden opgehaald binnen een nieuwe transactie
-     * - Er geen StaleObjectStateException optreedt door detached entities
-     * 
-     * @param buildingId Het UUID van het gebouw waarvoor embeddings gegenereerd moeten worden
-     */
-    private void scheduleEmbeddingTask(java.util.UUID buildingId) {
-        backgroundProcessor.submitTask(() -> {
-            // Haal verse data op binnen de achtergrondtaak (inclusief gebouwtype)
-            var buildingOpt = buildingPolygonRepository.findByIdIncludingBuildingType(buildingId);
-            
-            // Null-check: als het gebouw ondertussen is verwijderd, slaan we de embedding over
-            if (buildingOpt.isEmpty()) {
-                System.out.println("Polygon " + buildingId + " niet meer gevonden, embedding wordt overgeslagen");
-                return;
-            }
-            
-            var building = buildingOpt.get();
-            
-            String source = new BuildingEmbeddingMapper().toEmbeddableText(building);
-            float[] embedding = ollamaConnectorService.createEmbedding(source);
-            String modelName = ollamaConnectorService.getEmbeddingModelName();
-
-            BuildingPolygonEmbeddingEntity embeddingEntity = new BuildingPolygonEmbeddingEntity(
-                building.getBuildingId(),
-                embedding,
-                modelName,
-                source,
-                java.time.OffsetDateTime.now()
-            );
-
-            buildingPolygonEmbeddingRepository.save(embeddingEntity);
-        });
-    }
-
-
-    // private List<String> getBuildingsInZone(){
-
-    // }
-    
-    @ToolFunctionCall(
-        name = "get_buildings_based_on_description",
-        description = "Get a list of building descriptions (full text) that match the given description based on embedding search. \n Useful for finding buildings that match a certain description or function."
-    )
-    private List<String> getBuildingsBasedOnDescription(
-        @ToolParameter(description = "The fonetic search string to search the embeddings for.") String prompt, 
-        @ToolParameter(description = "The maximum number of building descriptions to return.") int limit){
-        float[] promptEmbedding = ollamaConnectorService.createEmbedding(prompt);
-        return buildingPolygonEmbeddingRepository
-            .findNearestByEmbedding(promptEmbedding, 5)
-            .stream().map(x->x.getEmbeddingSource()).toList();
-    }
-
 }
