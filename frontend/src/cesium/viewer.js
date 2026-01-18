@@ -59,7 +59,8 @@ export function setupViewer(containerId) {
         5.774703939093954, 53.1976225789762,
         5.786410809746187, 53.19704032421097,
       ]),
-      material: Color.GRAY,
+      material: Color.GRAY.withAlpha(0.9),
+      zIndex: -1,
     },
   });
 

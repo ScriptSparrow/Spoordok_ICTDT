@@ -596,14 +596,15 @@ export class CesiumEditor {
                 console.error('CesiumEditor: Ongeldige weg coördinaten', flattened);
                 return;
             }
-
+            console.log('width: ' + feature.width);
             const positions = Cartesian3.fromDegreesArray(flattened);
-            entity.polyline = {
+            entity.corridor = {
                 positions: positions,
-                width: feature.width || 5,
+                width: feature.width || 5, // width in meters
                 material: color.withAlpha(0.6),
-                clampToGround: true
+                heightReference: HeightReference.CLAMP_TO_GROUND
             };
+            entity.polyline = undefined;
             entity.polygon = undefined;
         }
     }
