@@ -3,12 +3,75 @@ import { FeatureStore } from './editor/featureStore.js';
 import { CesiumEditor } from './editor/cesiumEditor.js';
 import { FeaturesApi } from './api/featuresApi.js';
 import { FeaturesApi as BuildingTypesApi } from './api/buildTypeApi.js';
+import { StatisticsApi } from './api/statisticsApi.js';
 import { showEditModal } from './ui/descriptionModal.js';
 
 // Module-level referenties zodat updateUI() toegang heeft tot de editor
 let editorInstance = null;
 let featureStoreInstance = null;
 let buildingTypesCache = [];  // Cache voor gebouwtypes met kleuren
+let statisticsApiInstance = null;  // API instance voor statistieken
+
+/**
+ * Update het Gegevens panel met statistieken van de backend.
+ */
+async function updateStatsPanel() {
+    const statsContent = document.getElementById('stats-content');
+    const legendContent = document.getElementById('legend-content');
+    if (!statsContent || !statisticsApiInstance) return;
+
+    try {
+        const stats = await statisticsApiInstance.getStatistics();
+
+        statsContent.innerHTML = `
+            <div class="stats-grid">
+                <p><span class="label">Totale kosten:</span> 
+                   <span class="value">€${stats.totalCost.toLocaleString('nl-NL', {maximumFractionDigits: 2})}</span></p>
+                <p><span class="label">Gem. kosten:</span> 
+                   <span class="value">€${stats.averageCost.toLocaleString('nl-NL', {maximumFractionDigits: 2})}</span></p>
+                <p><span class="label">Gem. kosten/bewoner:</span> 
+                   <span class="value">€${stats.averageCostPerCitizen.toLocaleString('nl-NL', {maximumFractionDigits: 2})}</span></p>
+                <p><span class="label">Totale capaciteit:</span> 
+                   <span class="value">${Math.round(stats.totalCapacity)} bewoners</span></p>
+                <p><span class="label">Totale punten:</span> 
+                   <span class="value">${stats.totalPoints.toLocaleString('nl-NL', {maximumFractionDigits: 0})}</span></p>
+                <p><span class="label">Bewoonbare gebouwen:</span> 
+                   <span class="value">${stats.totalLiveableBuildings}</span></p>
+                <p><span class="label">Hoogste gebouw:</span> 
+                   <span class="value">${stats.tallestBuilding.toFixed(1)}m</span></p>
+                <p><span class="label">Laagste gebouw:</span> 
+                   <span class="value">${stats.lowestBuilding.toFixed(1)}m</span></p>
+                <p><span class="label">Gem. hoogte:</span> 
+                   <span class="value">${stats.averageHeight.toFixed(1)}m</span></p>
+            </div>
+        `;
+
+        // Update legenda met building type counts
+        if (legendContent && stats.buildingTypeCounts) {
+            // Mapping van gebouwtype namen naar kleuren (uit buildingTypesCache)
+            const typeColors = {};
+            buildingTypesCache.forEach(type => {
+                typeColors[type.labelName] = type.color;
+            });
+            
+            let legendHtml = '';
+            for (const [typeName, count] of Object.entries(stats.buildingTypeCounts)) {
+                const color = typeColors[typeName] || '#ffffff';
+                legendHtml += `
+                    <div class="legend-item">
+                        <span class="swatch" style="background:${color}"></span>
+                        <span class="legend-label">${typeName}</span>
+                        <span class="legend-count">${count}</span>
+                    </div>
+                `;
+            }
+            legendContent.innerHTML = legendHtml || '<p class="muted">Geen gebouwen</p>';
+        }
+    } catch (error) {
+        statsContent.innerHTML = '<p class="muted">Kon statistieken niet laden</p>';
+        if (legendContent) legendContent.innerHTML = '<p class="muted">Kon legenda niet laden</p>';
+    }
+}
 
 /**
  * Haalt de kleur op voor een gebouwtype UUID.
@@ -33,6 +96,7 @@ async function init() {
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
     const api = new FeaturesApi(apiBaseUrl, useLocal);
     const buildingTypesApi = new BuildingTypesApi(apiBaseUrl);
+    statisticsApiInstance = new StatisticsApi(apiBaseUrl);
     
     // Cesium viewer opstarten
     const viewer = await setupViewer('cesiumContainer');
@@ -45,6 +109,17 @@ async function init() {
 
     // Callback voor berichtjes naar de gebruiker
     editor.onMessage = (msg, type) => showToast(msg, type);
+    
+    // Callback voor wanneer features worden gewijzigd (create/update/delete)
+    editor.onFeatureChange = () => updateStatsPanel();
+    
+    // Callback voor wanneer de editor modus verandert (toon/verberg voltooien knop)
+    const btnFinishDrawRef = document.getElementById('btn-finish-draw');
+    editor.onModeChange = (mode) => {
+        if (btnFinishDrawRef) {
+            btnFinishDrawRef.style.display = (mode === 'DRAW' || mode === 'DRAW_ROAD') ? 'block' : 'none';
+        }
+    };
 
     // Knoppen uit de HTML vissen en acties koppelen
     const btnDraw = document.getElementById('btn-draw');
@@ -54,6 +129,7 @@ async function init() {
     const btnUndo = document.getElementById('btn-undo');
     const btnRedo = document.getElementById('btn-redo');
     const btnReset = document.getElementById('btn-reset-camera');
+    const btnFinishDraw = document.getElementById('btn-finish-draw');
 
     const selectType = document.getElementById('select-type');
     const heightRange = document.getElementById('height-range');
@@ -61,6 +137,7 @@ async function init() {
 
     if (btnDraw) btnDraw.onclick = () => editor.setMode('DRAW');
     if (btnRoad) btnRoad.onclick = () => editor.setMode('DRAW_ROAD');
+    if (btnFinishDraw) btnFinishDraw.onclick = () => editor.finishDrawing();
     if (btnEdit) btnEdit.onclick = () => editor.setMode('EDIT');
     
     if (btnDelete) btnDelete.onclick = () => {
@@ -152,6 +229,9 @@ async function init() {
             editor.syncEntity(f);
         });
         console.log(`Lekker bezig, ${features.length} features ingeladen!`);
+        
+        // Statistieken panel bijwerken na het laden van features
+        updateStatsPanel();
     } catch (e) {
         console.warn('Backend niet gevonden, we gaan lokaal verder');
         showToast('Server niet bereikbaar - we slaan het lokaal voor je op', 'error');

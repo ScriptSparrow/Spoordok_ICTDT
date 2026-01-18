@@ -173,7 +173,7 @@ export class FeaturesApi {
                 return true;
             }
 
-            const url = `/api/buildings/building/${id}`;
+            const url = `${this.baseUrl}/api/buildings/building/${id}`;
             const response = await fetch(url, {
                 method: 'DELETE'
             });
