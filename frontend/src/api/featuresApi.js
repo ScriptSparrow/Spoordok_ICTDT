@@ -75,10 +75,23 @@ export class FeaturesApi {
         try {
             const isPoly = feature.geometry.type === 'Polygon';
             
-            // Let op: Backend heeft op dit moment blijkbaar geen POST voor roads...
+            // Wegen naar /api/roads sturen
             if (!isPoly) {
-                console.warn('FeaturesApi: Backend heeft nog geen POST voor wegen! We doen het lokaal.');
-                this.localStore.set(feature.id, JSON.parse(JSON.stringify(feature)));
+                const url = `${this.baseUrl}/api/roads`;
+                const body = {
+                    id: feature.id,
+                    roadDescription: feature.meta?.description || 'Nieuwe weg',
+                    roadType: feature.meta?.typeId ? { id: feature.meta.typeId } : null,
+                    coordinates: feature.geometry.coordinates.map(c => ({ x: c[0], y: c[1] }))
+                };
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 return feature;
             }
 
@@ -121,10 +134,23 @@ export class FeaturesApi {
         try {
             const isPoly = feature.geometry.type === 'Polygon';
             
-            // Backend heeft ook geen PUT voor wegen blijkbaar
+            // Wegen naar /api/roads sturen
             if (!isPoly) {
-                console.warn('FeaturesApi: Backend heeft geen PUT voor wegen! Lokaal bijgewerkt.');
-                this.localStore.set(id, JSON.parse(JSON.stringify(feature)));
+                const url = `${this.baseUrl}/api/roads`;
+                const body = {
+                    id: id,
+                    roadDescription: feature.meta?.description || 'Weg aangepast',
+                    roadType: feature.meta?.typeId ? { id: feature.meta.typeId } : null,
+                    coordinates: feature.geometry.coordinates.map(c => ({ x: c[0], y: c[1] }))
+                };
+
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 return feature;
             }
 
@@ -166,10 +192,18 @@ export class FeaturesApi {
             return true;
         }
         try {
-            // Wegverwijdering ook nog niet in de backend
+            // Wegen via /api/roads verwijderen
             if (!isPolygon) {
-                console.warn('FeaturesApi: Backend kan nog geen wegen deleten! Lokaal gedaan.');
-                this.localStore.delete(id);
+                const url = `${this.baseUrl}/api/roads`;
+                const body = { id: id };
+
+                const response = await fetch(url, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 return true;
             }
 

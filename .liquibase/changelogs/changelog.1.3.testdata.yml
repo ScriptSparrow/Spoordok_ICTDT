@@ -1,0 +1,22 @@
+﻿databaseChangeLog:
+  - changeSet:
+      id: 6
+      author: test-data
+      comment: Insert test data for road types
+      context: dev
+      changes:
+        - insert:
+            tableName: wegtypes
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: standaard_breedte
+                  valueNumeric: 12
+              - column:
+                  name: gebruikers
+                  value: "{}"
+              - column:
+                  name: texture
+                  value: null

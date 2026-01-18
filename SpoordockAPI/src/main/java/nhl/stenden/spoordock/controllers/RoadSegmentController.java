@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,7 +31,7 @@ public class RoadSegmentController {
     }
 
     @PostMapping
-    public ResponseEntity<?> addRoad(RoadSegmentDTO roadSegmentDTO) {
+    public ResponseEntity<?> addRoad(@RequestBody RoadSegmentDTO roadSegmentDTO) {
         if (roadSegmentDTO == null) {
             return ResponseEntity.status(400).body("RoadSegmentDTO cannot be null");
         }
@@ -48,7 +49,7 @@ public class RoadSegmentController {
     }
 
     @PutMapping
-    public ResponseEntity<?> updateRoad(RoadSegmentDTO roadSegmentDTO) {
+    public ResponseEntity<?> updateRoad(@RequestBody RoadSegmentDTO roadSegmentDTO) {
         if (roadSegmentDTO == null) {
             return ResponseEntity.status(400).body("RoadSegmentDTO cannot be null");
         }
@@ -66,7 +67,7 @@ public class RoadSegmentController {
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteRoad(RoadSegmentDTO roadSegmentDTO) {
+    public ResponseEntity<?> deleteRoad(@RequestBody RoadSegmentDTO roadSegmentDTO) {
         if (roadSegmentDTO == null) {
             return ResponseEntity.status(400).body("RoadSegmentDTO cannot be null");
         }
