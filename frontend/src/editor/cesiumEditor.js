@@ -353,6 +353,11 @@ export class CesiumEditor {
             feature.meta.typeId = typeId;
         }
         
+        // Haal de kleur uit de geselecteerde dropdown optie en stel deze in
+        if (selectedOption?.dataset?.color) {
+            feature.meta.color = selectedOption.dataset.color;
+        }
+        
         console.log('CesiumEditor: Feature aangemaakt', feature);
 
         // Voor polygonen: toon de beschrijving modal
