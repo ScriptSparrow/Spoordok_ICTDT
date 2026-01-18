@@ -2,12 +2,15 @@ import {
     ScreenSpaceEventHandler, 
     ScreenSpaceEventType, 
     Cartesian3, 
+    Cartesian2,
     Color, 
     CallbackProperty, 
     PolygonHierarchy, 
     Entity,
     Math as CesiumMath,
-    HeightReference
+    HeightReference,
+    LabelStyle,
+    VerticalOrigin
 } from 'cesium';
 import { createFeature } from './featureStore';
 import { showDescriptionModal } from '../ui/descriptionModal.js';
@@ -55,6 +58,10 @@ export class CesiumEditor {
         
         this.undoStack = [];
         this.redoStack = [];
+        
+        // Distance labels voor het weergeven van lijnlengtes tijdens tekenen
+        this.distanceLabels = [];
+        this.currentSegmentLabel = null;
 
         this.initEvents();
         this.initKeyboard();
@@ -134,6 +141,28 @@ export class CesiumEditor {
     }
 
     /**
+     * Berekent de afstand tussen twee punten en geeft een leesbare string terug.
+     */
+    calculateDistance(point1, point2) {
+        const distance = Cartesian3.distance(point1, point2);
+        if (distance >= 1000) {
+            return (distance / 1000).toFixed(2) + ' km';
+        }
+        return distance.toFixed(1) + ' m';
+    }
+
+    /**
+     * Berekent het middelpunt tussen twee punten.
+     */
+    getMidpoint(point1, point2) {
+        return new Cartesian3(
+            (point1.x + point2.x) / 2,
+            (point1.y + point2.y) / 2,
+            (point1.z + point2.z) / 2
+        );
+    }
+
+    /**
      * Voegt een punt toe tijdens het tekenen.
      */
     addDrawingPoint(position) {
@@ -146,6 +175,30 @@ export class CesiumEditor {
         if (!cartesian) {
             console.warn('CesiumEditor: Kon geen positie vinden op de kaart bij', position);
             return;
+        }
+        
+        // Als we minstens één vorig punt hebben, maak een label voor het voltooide segment
+        if (this.drawingPoints.length > 0) {
+            const prevPoint = this.drawingPoints[this.drawingPoints.length - 1];
+            const midpoint = this.getMidpoint(prevPoint, cartesian);
+            const distanceText = this.calculateDistance(prevPoint, cartesian);
+            
+            const label = this.viewer.entities.add({
+                position: midpoint,
+                label: {
+                    text: distanceText,
+                    font: '14px sans-serif',
+                    fillColor: Color.WHITE,
+                    style: LabelStyle.FILL,
+                    showBackground: true,
+                    backgroundColor: Color.BLACK.withAlpha(0.7),
+                    backgroundPadding: new Cartesian2(7, 5),
+                    verticalOrigin: VerticalOrigin.BOTTOM,
+                    pixelOffset: new Cartesian2(0, -10),
+                    disableDepthTestDistance: Number.POSITIVE_INFINITY
+                }
+            });
+            this.distanceLabels.push(label);
         }
         
         console.log('CesiumEditor: Puntje gezet', cartesian);
@@ -195,6 +248,35 @@ export class CesiumEditor {
         if (!cartesian || !this.previewEntity) return;
 
         const points = [...this.drawingPoints, cartesian];
+        
+        // Update of maak het huidige segment label (volgt de muis)
+        if (this.drawingPoints.length > 0) {
+            const lastPoint = this.drawingPoints[this.drawingPoints.length - 1];
+            const midpoint = this.getMidpoint(lastPoint, cartesian);
+            const distanceText = this.calculateDistance(lastPoint, cartesian);
+            
+            if (!this.currentSegmentLabel) {
+                this.currentSegmentLabel = this.viewer.entities.add({
+                    position: midpoint,
+                    label: {
+                        text: distanceText,
+                        font: '14px sans-serif',
+                        fillColor: Color.YELLOW,
+                        style: LabelStyle.FILL,
+                        showBackground: true,
+                        backgroundColor: Color.BLACK.withAlpha(0.7),
+                        backgroundPadding: new Cartesian2(7, 5),
+                        verticalOrigin: VerticalOrigin.BOTTOM,
+                        pixelOffset: new Cartesian2(0, -10),
+                        disableDepthTestDistance: Number.POSITIVE_INFINITY
+                    }
+                });
+            } else {
+                this.currentSegmentLabel.position = midpoint;
+                this.currentSegmentLabel.label.text = distanceText;
+            }
+        }
+        
         if (this.mode === 'DRAW') {
             if (this.previewEntity.polygon) {
                 this.previewEntity.polygon.hierarchy = new PolygonHierarchy(points);
@@ -328,6 +410,18 @@ export class CesiumEditor {
      * Ruimt de preview zooi op.
      */
     cleanupDrawing() {
+        // Verwijder alle afstand labels
+        this.distanceLabels.forEach(label => {
+            this.viewer.entities.remove(label);
+        });
+        this.distanceLabels = [];
+        
+        // Verwijder het huidige segment label
+        if (this.currentSegmentLabel) {
+            this.viewer.entities.remove(this.currentSegmentLabel);
+            this.currentSegmentLabel = null;
+        }
+        
         if (this.previewEntity) {
             this.viewer.entities.remove(this.previewEntity);
             this.previewEntity = null;
