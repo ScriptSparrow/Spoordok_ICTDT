@@ -14,7 +14,7 @@ export class FeaturesApi {
      */
     async getAll() {
         if (this.useLocal) {
-            console.log('FeaturesApi: We draaien LOKAAL, geen zin om de server te storen');
+            
             return Array.from(this.localStore.values());
         }
         try {
@@ -58,7 +58,7 @@ export class FeaturesApi {
 
             return [...normalizedBuildings, ...normalizedRoads];
         } catch (error) {
-            console.error('FeaturesApi.getAll ging mis:', error);
+            
             throw error;
         }
     }
@@ -67,7 +67,7 @@ export class FeaturesApi {
      * Maakt een nieuwe feature aan (gebouw of weg).
      */
     async create(feature) {
-        console.log('FeaturesApi: Nieuwe feature aanmaken', feature);
+        
         if (this.useLocal) {
             this.localStore.set(feature.id, JSON.parse(JSON.stringify(feature)));
             return feature;
@@ -77,7 +77,7 @@ export class FeaturesApi {
             
             // Let op: Backend heeft op dit moment blijkbaar geen POST voor roads...
             if (!isPoly) {
-                console.warn('FeaturesApi: Backend heeft nog geen POST voor wegen! We doen het lokaal.');
+                
                 this.localStore.set(feature.id, JSON.parse(JSON.stringify(feature)));
                 return feature;
             }
@@ -104,7 +104,7 @@ export class FeaturesApi {
             const data = await response.json();
             return data;
         } catch (error) {
-            console.error('FeaturesApi.create faalde:', error);
+            
             throw error;
         }
     }
@@ -113,7 +113,7 @@ export class FeaturesApi {
      * Updatet een bestaande feature.
      */
     async update(id, feature) {
-        console.log('FeaturesApi: Feature updaten', id, feature);
+        
         if (this.useLocal) {
             this.localStore.set(id, JSON.parse(JSON.stringify(feature)));
             return feature;
@@ -123,7 +123,7 @@ export class FeaturesApi {
             
             // Backend heeft ook geen PUT voor wegen blijkbaar
             if (!isPoly) {
-                console.warn('FeaturesApi: Backend heeft geen PUT voor wegen! Lokaal bijgewerkt.');
+                
                 this.localStore.set(id, JSON.parse(JSON.stringify(feature)));
                 return feature;
             }
@@ -151,7 +151,7 @@ export class FeaturesApi {
             const data = await response.json();
             return data;
         } catch (error) {
-            console.error('FeaturesApi.update mislukt:', error);
+            
             throw error;
         }
     }
@@ -160,7 +160,7 @@ export class FeaturesApi {
      * Verwijdert een feature van de kaart en uit de database.
      */
     async delete(id, isPolygon = true) {
-        console.log('FeaturesApi: Feature deleten', id, { isPolygon });
+        
         if (this.useLocal) {
             this.localStore.delete(id);
             return true;
@@ -168,7 +168,7 @@ export class FeaturesApi {
         try {
             // Wegverwijdering ook nog niet in de backend
             if (!isPolygon) {
-                console.warn('FeaturesApi: Backend kan nog geen wegen deleten! Lokaal gedaan.');
+                
                 this.localStore.delete(id);
                 return true;
             }
@@ -181,7 +181,7 @@ export class FeaturesApi {
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             return true;
         } catch (error) {
-            console.error('FeaturesApi.delete ging niet lekker:', error);
+            
             throw error;
         }
     }
