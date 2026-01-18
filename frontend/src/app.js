@@ -95,7 +95,7 @@ async function init() {
                     meta: updatedMeta 
                 });
                 
-                console.log(`Gebouwtype veranderd naar: ${newTypeId}, kleur: ${newColor}`);
+                
             }
         };
     }
@@ -139,7 +139,7 @@ async function init() {
                 });
         }
     } catch (e) {
-        console.warn('Kon gebouwtypes niet laden:', e);
+        
         // Als het niet lukt, laat de placeholder staan
     }
 
@@ -150,9 +150,9 @@ async function init() {
             featureStore.addFeature(f);
             editor.syncEntity(f);
         });
-        console.log(`Lekker bezig, ${features.length} features ingeladen!`);
+        
     } catch (e) {
-        console.warn('Backend niet gevonden, we gaan lokaal verder');
+        
         showToast('Server niet bereikbaar - we slaan het lokaal voor je op', 'error');
     }
 
@@ -184,39 +184,6 @@ function updateUI(selected) {
                 <p><span class="label">Functie:</span> <span class="value">${functionName}</span></p>
                 <p><span class="label">${isPoly ? 'Hoogte' : 'Breedte'}:</span> <span class="value">${isPoly ? selected.height : selected.width}m</span></p>
         `;
-<<<<<<< HEAD
-=======
-        const meta = selected.meta || {};
-        
-        if (isPoly) {
-            infoContent.innerHTML = `
-                <div class="feature-info">
-                    <h3>${meta.name || 'Naamloos Gebouw'}</h3>
-                    <p><em>${meta.description || 'Geen omschrijving'}</em></p>
-                    <hr>
-                    <p><span class="label">ID:</span> <span class="value">${selected.id.substring(0, 8)}...</span></p>
-                    <p><span class="label">Type:</span> <span class="value">${meta.typeLabel || 'Onbekend'}</span></p>
-                    <p><span class="label">Hoogte:</span> <span class="value">${selected.height}m</span></p>
-                    <hr>
-                    <p><span class="label">Kosten:</span> <span class="value">€${meta.costPerUnit || 0} per ${meta.unit || 'eenheid'}</span></p>
-                    <p><span class="label">Bewoners:</span> <span class="value">${meta.residentsPerUnit || 0}</span></p>
-                    <p><span class="label">Punten:</span> <span class="value">${meta.points || 0}</span></p>
-                    <p><span class="label">Bewoonbaar:</span> <span class="value">${meta.inhabitable ? 'Ja' : 'Nee'}</span></p>
-                </div>
-            `;
-        } else {
-            infoContent.innerHTML = `
-                <div class="feature-info">
-                    <p><span class="label">ID:</span> <span class="value">${selected.id.substring(0, 8)}...</span></p>
-                    <p><span class="label">Soort:</span> <span class="value">${selected.geometry.type}</span></p>
-                    <p><span class="label">Functie:</span> <span class="value">${selected.featureType}</span></p>
-                    <p><span class="label">Breedte:</span> <span class="value">${selected.width}m</span></p>
-                </div>
-            `;
-        }
->>>>>>> refs/rewritten/merged-main
-=======
->>>>>>> 332b965 (merged main)
         
         // Voor polygonen: toon extra info (naam, omschrijving) en bewerk knop
         if (isPoly) {

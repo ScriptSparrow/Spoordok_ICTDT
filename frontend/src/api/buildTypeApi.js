@@ -31,7 +31,7 @@ export class FeaturesApi {
             const data = await response.json();
             return data;
         } catch (error) {
-            console.error('FeaturesApi.getList ging mis:', error);
+            
             throw error;
         }   
     }
