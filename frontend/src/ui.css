@@ -129,6 +129,30 @@
   vertical-align: middle;
 }
 
+/* Legend with counts styling */
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.legend-item:last-child {
+    border-bottom: none;
+}
+.legend-label {
+    flex: 1;
+    color: #cbd5e1;
+    font-size: 13px;
+}
+.legend-count {
+    color: #e6e6e6;
+    font-weight: 600;
+    font-size: 13px;
+    min-width: 24px;
+    text-align: right;
+}
+
 #toast-container {
   position: absolute;
   right: 340px;
@@ -171,6 +195,32 @@
 }
 #info-content .label { color: #9ca3af; }
 #info-content .value { color: #e6e6e6; font-weight: 500; }
+
+/* Stats grid layout voor Gegevens panel */
+.stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stats-grid p {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.stats-grid p:last-child {
+  border-bottom: none;
+}
+.stats-grid .label {
+  color: #9ca3af;
+  font-size: 13px;
+}
+.stats-grid .value {
+  color: #e6e6e6;
+  font-weight: 500;
+  font-size: 13px;
+}
 
 /* Scheidingslijn tussen basis info en polygon details */
 .info-divider {

@@ -25,4 +25,13 @@ public interface BuildingPolygonRepository extends ListCrudRepository<BuildingPo
     @Query("select bp from BuildingPolygonEntity bp where bp.buildingId = :id")
     Optional<BuildingPolygonEntity> findByIdIncludingBuildingType(@Param("id") UUID id);
 
+    /**
+     * Haalt alle gebouw-IDs op met hun oppervlakte in vierkante meters berekend door PostGIS.
+     * Gebruikt ST_Area met geography cast voor nauwkeurige berekening op geodetische coördinaten.
+     * 
+     * @return Lijst van Object[] arrays waarbij [0] = UUID (building ID) en [1] = Double (area in m²)
+     */
+    @Query(value = "SELECT id, ST_Area(punten::geography) as area_m2 FROM polygones", nativeQuery = true)
+    List<Object[]> findAllBuildingAreasInSquareMeters();
+
 }
