@@ -42,6 +42,20 @@ public class RoadService {
             throw new IllegalArgumentException("Road segment with ID " + roadSegmentDTO.getId() + " already exists.");
         }
 
+        // Als er geen roadType is meegegeven, gebruik het eerste beschikbare roadtype
+        if (roadSegmentDTO.getRoadType() == null || roadSegmentDTO.getRoadType().getId() == null) {
+            var defaultRoadType = roadTypeRepository.findAll().stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("Geen road types gevonden in de database!"));
+            
+            roadSegmentDTO = new RoadSegmentDTO(
+                roadSegmentDTO.getId(),
+                roadTypeMapper.toDTO(defaultRoadType),
+                roadSegmentDTO.getRoadDescription(),
+                roadSegmentDTO.getWidth(),
+                roadSegmentDTO.getCoordinates()
+            );
+        }
+
         var entity = roadSegmentMapper.toEntity(roadSegmentDTO);
         roadSegmentRepository.save(entity);
     }
@@ -53,6 +67,20 @@ public class RoadService {
     public void updateRoadSegment(RoadSegmentDTO roadSegmentDTO) throws IllegalArgumentException {
         if(!roadSegmentRepository.existsById(roadSegmentDTO.getId())){
             throw new IllegalArgumentException("Road segment with ID " + roadSegmentDTO.getId() + " does not exist.");
+        }
+
+        // Als er geen roadType is meegegeven, gebruik het eerste beschikbare roadtype
+        if (roadSegmentDTO.getRoadType() == null || roadSegmentDTO.getRoadType().getId() == null) {
+            var defaultRoadType = roadTypeRepository.findAll().stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("Geen road types gevonden in de database!"));
+            
+            roadSegmentDTO = new RoadSegmentDTO(
+                roadSegmentDTO.getId(),
+                roadTypeMapper.toDTO(defaultRoadType),
+                roadSegmentDTO.getRoadDescription(),
+                roadSegmentDTO.getWidth(),
+                roadSegmentDTO.getCoordinates()
+            );
         }
 
         var entity = roadSegmentMapper.toEntity(roadSegmentDTO);

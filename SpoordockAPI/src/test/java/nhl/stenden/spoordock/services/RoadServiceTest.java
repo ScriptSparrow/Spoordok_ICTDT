@@ -1,6 +1,7 @@
 package nhl.stenden.spoordock.services;
 
 import nhl.stenden.spoordock.controllers.dtos.RoadSegmentDTO;
+import nhl.stenden.spoordock.controllers.dtos.RoadTypeDTO;
 import nhl.stenden.spoordock.database.RoadSegmentRepository;
 import nhl.stenden.spoordock.database.RoadTypeRepository;
 import nhl.stenden.spoordock.database.entities.RoadSegment;
@@ -112,9 +113,14 @@ class RoadServiceTest {
     void addRoadSegment_savesEntity_whenIdDoesNotExist() {
         // Arrange
         UUID id = UUID.fromString("22222222-2222-2222-2222-222222222222");
+        UUID roadTypeId = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+
+        RoadTypeDTO roadTypeDTO = mock(RoadTypeDTO.class);
+        when(roadTypeDTO.getId()).thenReturn(roadTypeId);
 
         RoadSegmentDTO dto = mock(RoadSegmentDTO.class);
         when(dto.getId()).thenReturn(id);
+        when(dto.getRoadType()).thenReturn(roadTypeDTO);
 
         when(roadSegmentRepository.existsById(id)).thenReturn(false);
 
@@ -176,9 +182,14 @@ class RoadServiceTest {
     void updateRoadSegment_savesEntity_whenIdExists() {
         // Arrange
         UUID id = UUID.fromString("55555555-5555-5555-5555-555555555555");
+        UUID roadTypeId = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+
+        RoadTypeDTO roadTypeDTO = mock(RoadTypeDTO.class);
+        when(roadTypeDTO.getId()).thenReturn(roadTypeId);
 
         RoadSegmentDTO dto = mock(RoadSegmentDTO.class);
         when(dto.getId()).thenReturn(id);
+        when(dto.getRoadType()).thenReturn(roadTypeDTO);
 
         when(roadSegmentRepository.existsById(id)).thenReturn(true);
 
