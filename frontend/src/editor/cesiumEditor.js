@@ -10,6 +10,7 @@ import {
     HeightReference
 } from 'cesium';
 import { createFeature } from './featureStore';
+import { showDescriptionModal } from '../ui/descriptionModal.js';
 
 const TYPE_COLORS = {
     parks: Color.fromCssColorString('#34d399'),
@@ -261,10 +262,15 @@ export class CesiumEditor {
         }
 
         const selectType = document.getElementById('select-type');
-        let type = selectType ? selectType.value : (currentMode === 'DRAW' ? 'housing' : 'road');
+        let type = (selectType && selectType.value) ? selectType.value : null;
+        
+        // Fallback: gebruik de eerste beschikbare optie uit de dropdown
+        if (!type && selectType && selectType.options.length > 0) {
+            type = selectType.options[0].value;
+        }
         
         // Fix: Als we een weg tekenen, moet het type altijd 'road' zijn
-        if (currentMode === 'DRAW_ROAD') {
+        if (this.mode === 'DRAW_ROAD') {
             type = 'road';
         }
         
@@ -282,49 +288,80 @@ export class CesiumEditor {
 
         const feature = createFeature(type, geomType, finalCoords);
         console.log('CesiumEditor: Feature aangemaakt', feature);
-        
-        // Koppel het juiste buildingTypeId uit de database mapping
-        const buildingType = this.buildingTypes.find(t => t.labelName.toLowerCase() === type);
-        if (buildingType) {
-            feature.meta.typeId = buildingType.buildingTypeId;
-            feature.meta.typeLabel = buildingType.labelName;
-            feature.meta.costPerUnit = buildingType.costPerUnit;
-            feature.meta.unit = buildingType.unit;
-            feature.meta.residentsPerUnit = buildingType.residentsPerUnit;
-            feature.meta.points = buildingType.points;
-            feature.meta.inhabitable = buildingType.inhabitable;
+
+        // Stel de typeId en kleur in vanaf de dropdown (nu een UUID)
+        if (selectType && selectType.value) {
+            feature.meta.typeId = selectType.value;
+            // Haal de kleur uit het data-color attribuut van de geselecteerde optie
+            const selectedOption = selectType.selectedOptions[0];
+            if (selectedOption && selectedOption.dataset.color) {
+                feature.meta.color = selectedOption.dataset.color;
+            }
         }
 
-        // Metadata toevoegen zodat de backend niet gaat zeuren over @NotNull
+        // Voor polygonen: toon de beschrijving modal
         if (geomType === 'Polygon') {
-            feature.meta.name = `Gebouw ${feature.id.substring(0, 4)}`;
-            feature.meta.description = 'Nieuw getekend gebouw';
+            // Standaard naam genereren (deze moet verplicht gewijzigd worden)
+            const defaultName = `Gebouw ${feature.id.substring(0, 4)}`;
+            
+            // Gebouwtype naam ophalen van de geselecteerde dropdown optie
+            const buildingTypeName = this.getBuildingTypeName(selectType);
+            
+            // Hoogte instellen vanaf de slider (moet vóór de modal opgeslagen worden)
+            const heightInput = document.getElementById('height-input');
+            if (heightInput) {
+                feature.height = parseFloat(heightInput.value);
+            }
+            
+            // Preview opruimen voordat de modal verschijnt
+            this.cleanupDrawing();
+            
+            showDescriptionModal(
+                feature,
+                buildingTypeName,
+                defaultName,
+                (name, description) => {
+                    // Gebruiker heeft opgeslagen - stel naam en beschrijving in
+                    feature.meta.name = name;
+                    feature.meta.description = description;
+                    
+                    this.execute({ type: 'CREATE', feature: feature });
+                    setTimeout(() => this.selectFeature(feature.id), 100);
+                    if (this.onMessage) this.onMessage('Feature succesvol opgeslagen!', 'success');
+                    this.setMode('IDLE');
+                },
+                () => {
+                    // Gebruiker heeft geannuleerd - opruimen zonder op te slaan
+                    if (this.onMessage) this.onMessage('Tekenen geannuleerd', 'info');
+                    this.setMode('IDLE');
+                }
+            );
         } else {
+            // Wegen - bestaand gedrag behouden
             feature.meta.description = 'Nieuwe weg';
-        }
-
-        // Hoogte of breedte instellen vanaf de slider
-        const heightInput = document.getElementById('height-input');
-        if (heightInput) {
-            const val = parseFloat(heightInput.value);
-            if (geomType === 'Polygon') feature.height = val;
-            else feature.width = val;
-        }
-
-        try {
-            await this.execute({
-                type: 'CREATE',
-                feature: feature
-            });
-
-            // Selecteer em meteen even voor de feedback
+            
+            const heightInput = document.getElementById('height-input');
+            if (heightInput) {
+                feature.width = parseFloat(heightInput.value);
+            }
+            
+            this.execute({ type: 'CREATE', feature: feature });
             setTimeout(() => this.selectFeature(feature.id), 100);
-
             if (this.onMessage) this.onMessage('Feature succesvol opgeslagen!', 'success');
-        } catch (err) {
-            console.error('CesiumEditor: Opslaan mislukt', err);
-            if (this.onMessage) this.onMessage('Opslaan mislukt. Controleer de console voor details.', 'error');
+            this.setMode('IDLE');
         }
+    }
+    
+    /**
+     * Haalt de gebouwtype naam op van de geselecteerde dropdown optie.
+     * @param {HTMLSelectElement} selectElement - De type selectie dropdown
+     * @returns {string} De naam van het gebouwtype
+     */
+    getBuildingTypeName(selectElement) {
+        if (selectElement && selectElement.selectedOptions && selectElement.selectedOptions.length > 0) {
+            return selectElement.selectedOptions[0].textContent || selectElement.value;
+        }
+        return 'Onbekend';
     }
 
     /**
@@ -389,13 +426,9 @@ export class CesiumEditor {
         const feature = this.featureStore.getFeature(id);
         if (!feature) return;
 
-        // Gebruik kleur uit database als beschikbaar, anders fallback naar TYPE_COLORS
-        let baseColor;
-        if (feature.meta && feature.meta.color) {
-            baseColor = Color.fromCssColorString(feature.meta.color);
-        } else {
-            baseColor = TYPE_COLORS[feature.featureType] || Color.WHITE;
-        }
+        // Haal kleur uit feature meta (database) of val terug op TYPE_COLORS voor wegen
+        const colorHex = feature.meta?.color || TYPE_COLORS[feature.featureType]?.toCssHexString() || '#ffffff';
+        const baseColor = Color.fromCssColorString(colorHex);
         const color = highlighted ? baseColor.withAlpha(0.9) : baseColor.withAlpha(0.6);
 
         if (entity.polygon) {
@@ -442,31 +475,19 @@ export class CesiumEditor {
             }
         }
 
-        try {
-            // We passen de wijziging toe via execute -> apply
-            await this.execute({
-                type: 'UPDATE',
-                id: this.selectedId,
-                oldFeature: oldFeature,
-                newFeature: newFeature
-            });
+        // Opslaan naar de backend (apart van execute om dubbele lokale updates te voorkomen)
+        this.api.update(this.selectedId, newFeature).catch(err => {
+            console.error('CesiumEditor: Update naar backend mislukt', err);
+            if (this.onMessage) this.onMessage('Opslaan naar server mislukt', 'error');
+        });
 
-            // Update de UI (zijbalk) omdat de meta-data veranderd kan zijn
-            if (this.onSelectionChange) {
-                this.onSelectionChange(newFeature);
-            }
-            
-            console.log('CesiumEditor: Feature succesvol bijgewerkt');
-        } catch (err) {
-            console.error('CesiumEditor: Updaten mislukt', err);
-            if (this.onMessage) this.onMessage('Aanpassen mislukt. Controleer de console.', 'error');
-            
-            // Zet de UI terug naar de oude staat
-            this.syncEntity(oldFeature);
-            if (this.onSelectionChange) {
-                this.onSelectionChange(oldFeature);
-            }
-        }
+        // Voeg toe aan undo stack zonder opnieuw apply() aan te roepen
+        this.execute({
+            type: 'UPDATE',
+            id: this.selectedId,
+            oldFeature: oldFeature,
+            newFeature: newFeature
+        }, false); // lokale updates en API call zijn al gedaan hierboven
     }
 
     /**
@@ -504,16 +525,9 @@ export class CesiumEditor {
             entity = this.viewer.entities.add({ id: feature.id });
         }
 
-        // Gebruik de kleur uit de database (meta.color) als die beschikbaar is
-        // Anders fallback naar de hardcoded TYPE_COLORS mapping of wit
-        let color;
-        if (feature.meta && feature.meta.color) {
-            // Kleur uit database (hex string zoals "#f97316")
-            color = Color.fromCssColorString(feature.meta.color);
-        } else {
-            // Fallback naar de hardcoded TYPE_COLORS mapping
-            color = TYPE_COLORS[feature.featureType] || Color.WHITE;
-        }
+        // Haal kleur uit feature meta (database) of val terug op TYPE_COLORS voor wegen
+        const colorHex = feature.meta?.color || TYPE_COLORS[feature.featureType]?.toCssHexString() || '#ffffff';
+        const color = Color.fromCssColorString(colorHex);
 
         if (feature.geometry.type === 'Polygon') {
             const flattened = feature.geometry.coordinates[0].reduce((acc, val) => acc.concat(val), []);

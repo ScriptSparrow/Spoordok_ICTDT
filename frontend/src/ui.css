@@ -69,3 +69,164 @@
 }
 #info-content .label { color: #9ca3af; }
 #info-content .value { color: #e6e6e6; font-weight: 500; }
+
+/* Scheidingslijn tussen basis info en polygon details */
+.info-divider {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  margin: 12px 0;
+}
+
+/* Omschrijving tekst styling */
+.description-text {
+  color: #cbd5e1;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 4px 0 12px 0;
+  padding: 8px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+  word-wrap: break-word;
+}
+
+/* Bewerk knop voor polygon details */
+.btn-edit-details {
+  width: 100%;
+  margin-top: 8px;
+  background: #1e3a5f;
+  border-color: #2563eb;
+}
+.btn-edit-details:hover {
+  background: #2563eb;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Modal Container */
+.modal {
+    background: #1e293b;
+    border-radius: 8px;
+    padding: 20px;
+    width: 450px;
+    max-width: 90%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header h3 {
+    margin: 0 0 15px 0;
+    color: #f1f5f9;
+}
+
+.modal-body label {
+    display: block;
+    margin-bottom: 8px;
+    margin-top: 15px;
+    color: #94a3b8;
+}
+
+.modal-body label:first-of-type {
+    margin-top: 0;
+}
+
+.modal-body input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #475569;
+    border-radius: 4px;
+    background: #0f172a;
+    color: #f1f5f9;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.modal-body textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #475569;
+    border-radius: 4px;
+    background: #0f172a;
+    color: #f1f5f9;
+    resize: vertical;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.field-hint {
+    font-size: 12px;
+    color: #64748b;
+    margin: 5px 0 0 0;
+}
+
+/* Rode tekst voor verplichte/ongeldige velden */
+.field-hint.error {
+    color: #ef4444;
+    font-weight: 500;
+}
+
+.char-count {
+    text-align: right;
+    font-size: 12px;
+    color: #64748b;
+    margin: 5px 0 0 0;
+}
+
+#btn-example-description {
+    width: 100%;
+    padding: 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-primary, .btn-secondary, .btn-cancel {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+}
+
+.btn-secondary {
+    background: #475569;
+    color: #f1f5f9;
+}
+
+.btn-secondary:hover {
+    background: #334155;
+}
+
+.btn-cancel {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #475569;
+}
+
+.btn-cancel:hover {
+    background: rgba(71, 85, 105, 0.3);
+}
