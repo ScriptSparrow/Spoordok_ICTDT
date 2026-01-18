@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import lombok.extern.slf4j.Slf4j;
 import nhl.stenden.spoordock.backgroundprocessor.BackgroundProcessor;
 import nhl.stenden.spoordock.database.BuildingPolygonEmbeddingRepository;
 import nhl.stenden.spoordock.database.BuildingPolygonRepository;
@@ -11,6 +12,7 @@ import nhl.stenden.spoordock.database.entities.BuildingPolygonEmbeddingEntity;
 import nhl.stenden.spoordock.llmService.OllamaEmbeddingClient;
 import nhl.stenden.spoordock.services.mappers.BuildingEmbeddingMapper;
 
+@Slf4j
 @Component
 public class BuildingEmbeddingService {
 
@@ -31,10 +33,16 @@ public class BuildingEmbeddingService {
     }
 
     public List<String> getBuildingsBasedOnDescription(String prompt, int limit){
-        float[] promptEmbedding = ollamaEmbeddingClient.createEmbedding(prompt);
-        return buildingPolygonEmbeddingRepository
+        try{
+            float[] promptEmbedding = ollamaEmbeddingClient.createEmbedding(prompt);
+            return buildingPolygonEmbeddingRepository
             .findNearestByEmbedding(promptEmbedding, limit)
             .stream().map(x->x.getEmbeddingSource()).toList();
+        }catch(Exception e){
+            log.error("Error during getBuildingsBasedOnDescription: " + e.getMessage());
+            return List.of();
+        }
+       
     }
 
     //Embedding takes a long time, hence the need to do this in the background

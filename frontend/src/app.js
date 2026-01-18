@@ -3,6 +3,7 @@ import { FeatureStore } from './editor/featureStore.js';
 import { CesiumEditor } from './editor/cesiumEditor.js';
 import { FeaturesApi } from './api/featuresApi.js';
 import './components/chat-window.js';
+import './components/analyse-widget.js';
 import { FeaturesApi as BuildingTypesApi } from './api/buildTypeApi.js';
 import { showEditModal } from './ui/descriptionModal.js';
 
@@ -99,6 +100,34 @@ async function init() {
                 console.log(`Gebouwtype veranderd naar: ${newTypeId}, kleur: ${newColor}`);
             }
         };
+    }
+
+    const rightPanelExpander = document.getElementById('right-panel-expander');
+    if (rightPanelExpander) {
+        rightPanelExpander.onclick = () => {
+            const rightPanel = document.getElementById('right-panel');
+            if (rightPanel) {
+                rightPanel.classList.toggle('expanded');
+                // Optioneel: verander het pijltje
+                if (rightPanel.classList.contains('expanded')) {
+                    rightPanel.style.setProperty('--rotation', '0deg');
+                } else {
+                    rightPanel.style.setProperty('--rotation', '180deg');
+                }
+            }
+        };
+    }
+
+    // Listen for analysis-started event from analyse-widget
+    const analyseWidget = document.getElementById('analyse-widget');
+    if (analyseWidget) {
+        analyseWidget.addEventListener('analysis-started', (event) => {
+            const rightPanel = document.getElementById('right-panel');
+            if(rightPanel.classList.contains('expanded') === false){
+                rightPanel.classList.add('expanded');
+                rightPanel.style.setProperty('--rotation', '0deg');
+            }
+        });
     }
 
     // Hoogte of breedte aanpassen met de slider of het getal-vakje

@@ -95,16 +95,17 @@
 
     <!-- Rechter informatiepaneel -->
     <aside id="right-panel" class="panel right">
+        <div id="right-panel-expander"></div>
         <div class="panel-section">
             <h3>Informatie</h3>
             <div id="info-content">
                 <p>Selecteer een feature om details te zien.</p>
             </div>
         </div>
-        <div class="panel-section">
-            <button id="btn-simulate" class="btn primary" data-tooltip="Start AI-agent simulatie">Simuleer leefkwaliteit</button>
-            <div id="simulation-result" class="muted"></div>
+        <div id="analyse-widget-container">
+             <analyse-widget id="analyse-widget" base-url="http://localhost:6001"></analyse-widget>
         </div>
+       
     </aside>
 
     <!-- Toasts -->
