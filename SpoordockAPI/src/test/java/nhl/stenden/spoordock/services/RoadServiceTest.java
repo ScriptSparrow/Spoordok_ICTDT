@@ -1,6 +1,6 @@
 package nhl.stenden.spoordock.services;
 
-import nhl.stenden.spoordock.controllers.dtos.RoadSegementDTO;
+import nhl.stenden.spoordock.controllers.dtos.RoadSegmentDTO;
 import nhl.stenden.spoordock.database.RoadSegmentRepository;
 import nhl.stenden.spoordock.database.RoadTypeRepository;
 import nhl.stenden.spoordock.database.entities.RoadSegment;
@@ -41,13 +41,13 @@ class RoadServiceTest {
     void getRoadDTOs_returnsMappedDTOs() {
         // Arrange
         List<RoadSegment> entities = List.of(mock(RoadSegment.class), mock(RoadSegment.class));
-        List<RoadSegementDTO> dtos = List.of(mock(RoadSegementDTO.class), mock(RoadSegementDTO.class));
+        List<RoadSegmentDTO> dtos = List.of(mock(RoadSegmentDTO.class), mock(RoadSegmentDTO.class));
 
         when(roadSegmentRepository.findAll()).thenReturn(entities);
         when(roadSegmentMapper.toDTOs(entities)).thenReturn(dtos);
 
         // Act
-        List<RoadSegementDTO> result = roadService.getRoadDTOs();
+        List<RoadSegmentDTO> result = roadService.getRoadDTOs();
 
         // Assert
         assertSame(dtos, result);
@@ -91,7 +91,7 @@ class RoadServiceTest {
         // Arrange
         UUID id = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
-        RoadSegementDTO dto = mock(RoadSegementDTO.class);
+        RoadSegmentDTO dto = mock(RoadSegmentDTO.class);
         when(dto.getId()).thenReturn(id);
         when(roadSegmentRepository.existsById(id)).thenReturn(true);
 
@@ -113,7 +113,7 @@ class RoadServiceTest {
         // Arrange
         UUID id = UUID.fromString("22222222-2222-2222-2222-222222222222");
 
-        RoadSegementDTO dto = mock(RoadSegementDTO.class);
+        RoadSegmentDTO dto = mock(RoadSegmentDTO.class);
         when(dto.getId()).thenReturn(id);
 
         when(roadSegmentRepository.existsById(id)).thenReturn(false);
@@ -137,7 +137,7 @@ class RoadServiceTest {
         // Arrange
         UUID id = UUID.fromString("33333333-3333-3333-3333-333333333333");
 
-        RoadSegementDTO dto = mock(RoadSegementDTO.class);
+        RoadSegmentDTO dto = mock(RoadSegmentDTO.class);
         when(dto.getId()).thenReturn(id);
 
         // Act
@@ -154,7 +154,7 @@ class RoadServiceTest {
         // Arrange
         UUID id = UUID.fromString("44444444-4444-4444-4444-444444444444");
 
-        RoadSegementDTO dto = mock(RoadSegementDTO.class);
+        RoadSegmentDTO dto = mock(RoadSegmentDTO.class);
         when(dto.getId()).thenReturn(id);
 
         when(roadSegmentRepository.existsById(id)).thenReturn(false);
@@ -177,7 +177,7 @@ class RoadServiceTest {
         // Arrange
         UUID id = UUID.fromString("55555555-5555-5555-5555-555555555555");
 
-        RoadSegementDTO dto = mock(RoadSegementDTO.class);
+        RoadSegmentDTO dto = mock(RoadSegmentDTO.class);
         when(dto.getId()).thenReturn(id);
 
         when(roadSegmentRepository.existsById(id)).thenReturn(true);
