@@ -2,9 +2,7 @@ import { setupViewer, flyToSpoordok } from './cesium/viewer.js';
 import { FeatureStore } from './editor/featureStore.js';
 import { CesiumEditor } from './editor/cesiumEditor.js';
 import { FeaturesApi } from './api/featuresApi.js';
-<<<<<<< HEAD
 import './components/chat-window.js';
-=======
 import { FeaturesApi as BuildingTypesApi } from './api/buildTypeApi.js';
 import { showEditModal } from './ui/descriptionModal.js';
 
@@ -22,7 +20,6 @@ function getBuildingTypeColor(typeId) {
     const buildingType = buildingTypesCache.find(t => t.buildingTypeId === typeId);
     return buildingType?.color || null;
 }
->>>>>>> main
 
 /**
  * De main entry point van onze app.
