@@ -75,6 +75,9 @@ export class CesiumEditor {
         console.log('CesiumEditor: Standje gewisseld naar', this.mode);
         this.cleanupDrawing();
         
+        // Notify listeners about mode change
+        if (this.onModeChange) this.onModeChange(this.mode);
+        
         if (this.mode === 'IDLE') {
             this.clearSelection();
             this.viewer.canvas.style.cursor = 'default';
@@ -110,10 +113,11 @@ export class CesiumEditor {
         }, ScreenSpaceEventType.MOUSE_MOVE);
 
         this.handler.setInputAction(() => {
+            console.log('RIGHT_DOWN detected, mode:', this.mode);  // Debug logging
             if (this.mode === 'DRAW' || this.mode === 'DRAW_ROAD') {
                 this.finishDrawing();
             }
-        }, ScreenSpaceEventType.RIGHT_CLICK);
+        }, ScreenSpaceEventType.RIGHT_DOWN);
 
         this.handler.setInputAction(() => {
             if (this.mode === 'DRAW' || this.mode === 'DRAW_ROAD') {
@@ -130,6 +134,10 @@ export class CesiumEditor {
             if (e.key === 'Escape') {
                 if (this.mode === 'DRAW' || this.mode === 'DRAW_ROAD') {
                     this.setMode('IDLE');
+                }
+            } else if (e.key === 'Enter') {
+                if (this.mode === 'DRAW' || this.mode === 'DRAW_ROAD') {
+                    this.finishDrawing();
                 }
             } else if (e.ctrlKey && e.key.toLowerCase() === 'z') {
                 if (e.shiftKey) this.redo();
@@ -605,9 +613,12 @@ export class CesiumEditor {
      */
     async execute(command, shouldApply = true) {
         console.log('CesiumEditor: Actie uitvoeren', { type: command.type, shouldApply });
-        if (shouldApply) this.apply(command);
+        if (shouldApply) await this.apply(command);
         this.undoStack.push(command);
         this.redoStack = [];
+        
+        // Always trigger onFeatureChange, even when shouldApply is false
+        if (this.onFeatureChange) this.onFeatureChange(command.type);
     }
 
     /**
@@ -620,7 +631,17 @@ export class CesiumEditor {
                 case 'CREATE':
                     this.featureStore.addFeature(command.feature);
                     this.syncEntity(command.feature);
-                    await this.api.create(command.feature);
+                    const result = await this.api.create(command.feature);
+                    // Sync the backend-generated ID with the local feature
+                    if (result && result.buildingId && result.buildingId !== command.feature.id) {
+                        const oldId = command.feature.id;
+                        command.feature.id = result.buildingId;
+                        this.featureStore.removeFeature(oldId);
+                        this.featureStore.addFeature(command.feature);
+                        this.viewer.entities.removeById(oldId);
+                        this.syncEntity(command.feature);
+                        console.log('CesiumEditor: ID gesynchroniseerd van', oldId, 'naar', result.buildingId);
+                    }
                     break;
                 case 'UPDATE':
                     this.featureStore.updateFeature(command.id, command.newFeature);

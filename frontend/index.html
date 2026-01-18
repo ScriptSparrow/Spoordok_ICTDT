@@ -54,10 +54,13 @@
         <div class="panel-section">
             <h3>Tools</h3>
             <div class="tool-row">
-                <button id="btn-draw" class="btn" data-tooltip="Teken polygon (klik om punten te plaatsen, klik laatste punt om te sluiten)">Teken polygon</button>
+                <button id="btn-draw" class="btn" data-tooltip="Teken polygon (klik om punten te plaatsen, dubbelklik/Enter/rechtermuisknop om te voltooien)">Teken polygon</button>
                 <button id="btn-road" class="btn" data-tooltip="Teken weg (polyline)">Teken weg</button>
                 <button id="btn-edit" class="btn" data-tooltip="Bewerken: selecteer feature om eigenschappen aan te passen">Bewerken</button>
                 <button id="btn-delete" class="btn" data-tooltip="Verwijder geselecteerde feature">Verwijder</button>
+            </div>
+            <div class="tool-row">
+                <button id="btn-finish-draw" class="btn primary" style="display:none" data-tooltip="Voltooi tekenen (of druk Enter)">Voltooien</button>
             </div>
             <div class="tool-row">
                 <button id="btn-undo" class="btn" data-tooltip="Ongedaan maken (Ctrl+Z)">Undo</button>
@@ -77,17 +80,21 @@
                 <input id="height-range" type="range" min="0" max="100" step="1" value="10" />
                 <input id="height-input" type="number" min="0" max="500" step="1" value="10" />
             </label>
-            <div class="legend">
-                <div><span class="swatch" style="background:#34d399"></span>Groen</div>
-                <div><span class="swatch" style="background:#60a5fa"></span>Water</div>
-                <div><span class="swatch" style="background:#fbbf24"></span>Wonen</div>
-                <div><span class="swatch" style="background:#9ca3af"></span>Industrie</div>
-                <div><span class="swatch" style="background:#a78bfa"></span>Kantoor</div>
-                <div><span class="swatch" style="background:#ffff00"></span>Weg</div>
-            </div>
         </div>
         <div class="panel-section">
             <button id="btn-reset-camera" class="btn" data-tooltip="Reset camera naar Spoordok">Reset camera</button>
+        </div>
+        <div class="panel-section">
+            <h3>Gegevens</h3>
+            <div id="stats-content">
+                <p class="muted">Laden...</p>
+            </div>
+        </div>
+        <div class="panel-section">
+            <h3>Legenda</h3>
+            <div id="legend-content" class="legend">
+                <p class="muted">Laden...</p>
+            </div>
         </div>
     </aside>
 
