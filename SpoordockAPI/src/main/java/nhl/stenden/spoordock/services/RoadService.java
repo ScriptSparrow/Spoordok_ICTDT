@@ -1,6 +1,6 @@
 package nhl.stenden.spoordock.services;
 
-import nhl.stenden.spoordock.controllers.dtos.RoadSegementDTO;
+import nhl.stenden.spoordock.controllers.dtos.RoadSegmentDTO;
 import nhl.stenden.spoordock.controllers.dtos.RoadTypeDTO;
 import nhl.stenden.spoordock.database.RoadSegmentRepository;
 import nhl.stenden.spoordock.database.RoadTypeRepository;
@@ -27,7 +27,7 @@ public class RoadService {
         this.roadTypeMapper = roadTypeMapper;
     }
 
-    public List<RoadSegementDTO> getRoadDTOs () {
+    public List<RoadSegmentDTO> getRoadDTOs () {
         var roadSegments = roadSegmentRepository.findAll();
         return roadSegmentMapper.toDTOs(roadSegments);
     }
@@ -37,25 +37,25 @@ public class RoadService {
         return roadTypeMapper.toDTOs(roadTypes);
     }
 
-    public void addRoadSegment(RoadSegementDTO roadSegementDTO) throws IllegalArgumentException {
-        if(roadSegmentRepository.existsById(roadSegementDTO.getId())){
-            throw new IllegalArgumentException("Road segment with ID " + roadSegementDTO.getId() + " already exists.");
+    public void addRoadSegment(RoadSegmentDTO roadSegmentDTO) throws IllegalArgumentException {
+        if(roadSegmentRepository.existsById(roadSegmentDTO.getId())){
+            throw new IllegalArgumentException("Road segment with ID " + roadSegmentDTO.getId() + " already exists.");
         }
 
-        var entity = roadSegmentMapper.toEntity(roadSegementDTO);
+        var entity = roadSegmentMapper.toEntity(roadSegmentDTO);
         roadSegmentRepository.save(entity);
     }
 
-    public void deleteRoadSegment(RoadSegementDTO roadSegementDTO)  {
-        roadSegmentRepository.deleteById(roadSegementDTO.getId());
+    public void deleteRoadSegment(RoadSegmentDTO roadSegmentDTO)  {
+        roadSegmentRepository.deleteById(roadSegmentDTO.getId());
     }
 
-    public void updateRoadSegment(RoadSegementDTO roadSegementDTO) throws IllegalArgumentException {
-        if(!roadSegmentRepository.existsById(roadSegementDTO.getId())){
-            throw new IllegalArgumentException("Road segment with ID " + roadSegementDTO.getId() + " does not exist.");
+    public void updateRoadSegment(RoadSegmentDTO roadSegmentDTO) throws IllegalArgumentException {
+        if(!roadSegmentRepository.existsById(roadSegmentDTO.getId())){
+            throw new IllegalArgumentException("Road segment with ID " + roadSegmentDTO.getId() + " does not exist.");
         }
 
-        var entity = roadSegmentMapper.toEntity(roadSegementDTO);
+        var entity = roadSegmentMapper.toEntity(roadSegmentDTO);
         roadSegmentRepository.save(entity);
     }
 
