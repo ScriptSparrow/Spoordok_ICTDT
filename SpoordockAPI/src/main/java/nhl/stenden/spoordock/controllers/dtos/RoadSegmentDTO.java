@@ -4,10 +4,11 @@ import nhl.stenden.spoordock.controllers.dtos.common.Coordinate;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Data Transfer Object voor wegsegmenten.
- * Wordt gebruikt voor communicatie tussen frontend en backend.
+/*
+"De RoadSegementDTO beschrijft een wegsement zoals de frontend dat gebruikt,
+zonder afhankelijk te zijn van database- of geometrie-implementaties."
  */
+
 public class RoadSegmentDTO {
     private UUID id;
     private RoadTypeDTO roadType;

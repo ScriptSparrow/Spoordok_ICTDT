@@ -5,6 +5,10 @@ import org.springframework.data.repository.ListCrudRepository;
 
 import java.util.UUID;
 
+/*
+"De RoadTypeRepository verzorgt de standaarddatabasebewerkingen voor wegtypes via Spring Data."
+ */
+
 public interface RoadTypeRepository extends ListCrudRepository<RoadTypeTemplate, UUID> {
 
     // Onderstaande functie bestaat al in CrudRepo

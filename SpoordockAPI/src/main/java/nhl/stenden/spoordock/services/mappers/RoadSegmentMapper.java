@@ -10,6 +10,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/*
+"De RoadSegmentMapper zet roadsegment-entiteiten om naar DTO's en andersom,
+waarbij zowel semantische als geometrische data correct wordt vertaald."
+ */
+
 @Component
 public class RoadSegmentMapper implements Mapper<RoadSegmentDTO, RoadSegment> {
 
