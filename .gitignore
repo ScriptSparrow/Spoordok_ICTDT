@@ -51,6 +51,7 @@ venv
 __pycache__
 
 ### OLLAMA ###
+.ollama/models
 .ollama/.models
 
 ### Node ###
