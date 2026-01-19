@@ -8,6 +8,11 @@ import org.locationtech.jts.geom.LineString;
 
 import java.util.UUID;
 
+/*
+"De RoadSegment-entiteit representeert een fysiek wegsegment en combineert
+semantische eigenschappen met ruimtelijke geometrie, wat cruciaal is voor de Digital Twin."
+ */
+
 @Entity
 @Table(name = "wegsegmenten")
 @Getter

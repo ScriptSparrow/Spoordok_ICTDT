@@ -8,6 +8,11 @@ import lombok.Setter;
 
 import java.util.UUID;
 
+/*
+"De RoadTypeTemplate-entiteit definieert herbruikbare wegtypes die door meerdere wegsegmenten worden gebruikt,
+wat zorgt voor consistentie binnen het model."
+ */
+
 @Entity
 @Table(name = "wegtypes")
 @Getter

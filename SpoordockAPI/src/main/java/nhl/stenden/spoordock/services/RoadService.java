@@ -10,6 +10,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/*
+"De RoadService vormt de schakel tussen de controllers en de database.
+Hier wordt de businesslogica afgehandeld, zoals het ophalen, valideren en
+opslaan van wegdata, zodat de controllers zo eenvoudig mogelijk blijven."
+ */
+
 @Component
 public class RoadService {
     // Verbindende factor tussen database en controller laag qua wegen

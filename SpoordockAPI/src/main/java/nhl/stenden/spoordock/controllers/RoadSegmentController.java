@@ -15,6 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/*
+"De RoadSegmentController verzorgt de REST-endpoint voor wegsementen en
+geeft de afhandeling door aan de RoadService, waarbij correcte HTTP-statuscodes worden gebruikt."
+ */
+
 @RestController
 @RequestMapping("/api/roads") // /api om verschil te maken tussen ... en html pages
 public class RoadSegmentController {

@@ -5,6 +5,10 @@ import lombok.Setter;
 
 import java.util.UUID;
 
+/*
+"De RoadTypeDTO beschrijft een wegtype zoals het via de API beschikbaar wordt gesteld."
+ */
+
 @Getter
 @Setter
 public class RoadTypeDTO {

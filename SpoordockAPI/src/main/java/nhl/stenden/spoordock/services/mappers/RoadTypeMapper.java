@@ -7,6 +7,11 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+/*
+"De RoadTypeMapper vertaalt database-entiteiten naar DTOs en andersom,
+zodat het API-contract onafhankelijk blijft van de database."
+ */
+
 @Component
 public class RoadTypeMapper implements Mapper<RoadTypeDTO, RoadTypeTemplate>{
 
